@@ -1,5 +1,8 @@
 Götz, M. & H. Anzt (2018)
 https://sc18.supercomputing.org/proceedings/workshops/workshop_files/ws_lasalss102s2-file1.pdf
+git-repo von M. Götz:
+https://github.com/Markus-Goetz/block-prediction
+
 
 Shpakovych, M. (2023)
 https://inria.hal.science/hal-04254315/file/rt_0518.pdf
