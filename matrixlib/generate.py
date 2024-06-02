@@ -64,7 +64,7 @@ def add_blocks(
         block_gap_chance: float,
         block_size_average: int,
         block_size_std_dev: float,
-) -> None:
+) -> list[int]:
     # unpack and validate number of matrices and dimension
     number_of_matrices, dimension, dimension_check = matrix_array.shape
     if dimension_check != dimension:
@@ -124,3 +124,5 @@ def add_blocks(
                 index += current_block_size
                 # collect size for histogram creation
                 size_collector.append(current_block_size)
+
+    return size_collector
