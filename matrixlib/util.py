@@ -9,3 +9,9 @@ def generate_block_vector_hex_string(block_vector: np.array) -> str:
             int_rep += base
         base *= 2
     return f"{int_rep:016x}"
+
+
+def shift_normalize(matrix: np.array) -> np.array:
+    min_val: float = np.min(matrix)
+    max_val: float = np.max(matrix)
+    return (matrix - min_val) / (max_val - min_val)
