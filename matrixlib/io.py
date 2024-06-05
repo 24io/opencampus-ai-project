@@ -17,8 +17,7 @@ def write_matrix_to_file(
     for c in range(cols):
         for e in range(rows):
             # projecting interval [0, 1] in real numbers onto [0, 4294967295] in natural numbers
-            int_value = int(matrix_data[e][c] * 4294967295)  # = max(uint32) = 2**32 - 1
-
+            int_value = int(matrix_data[e][c] * np.iinfo(np.uint32).max)  # = max(uint32) = 2**32 - 1
             int_vector[e][c][0] = np.uint8((int_value & 0b11111111000000000000000000000000) >> 24)
             int_vector[e][c][1] = np.uint8((int_value & 0b00000000111111110000000000000000) >> 16)
             int_vector[e][c][2] = np.uint8((int_value & 0b00000000000000001111111100000000) >> 8)
@@ -43,7 +42,7 @@ def read_matrix_from_file(file_path: str) -> np.ndarray:
                 int_value += (image_vector[e][c][2] << 8) & 0b00000000000000001111111100000000
                 int_value += (image_vector[e][c][3])
 
-                data_vector[e][c] = (np.float32(int_value) / 4294967295.0)
+                data_vector[e][c] = (np.float32(int_value) / np.float32(np.iinfo(np.uint32).max))
         return data_vector
     except Exception as e:
         raise RuntimeError(f"Error loading and preprocessing image {file_path}: {e}")
