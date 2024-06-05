@@ -15,3 +15,25 @@ def shift_normalize(matrix: np.array) -> np.array:
     min_val: float = np.min(matrix)
     max_val: float = np.max(matrix)
     return (matrix - min_val) / (max_val - min_val)
+
+
+def narrow_to_band(data: np.ndarray, radius: int) -> np.ndarray:
+    entries, rows, _ = data.shape
+    band_width = 2 * radius + 1
+    result = np.zeros((entries, band_width, rows))
+    print(f"matrix shape: {data.shape}")
+    print(f"band shape: {result.shape}")
+    for k in range(entries):
+        # be wary of cache effects here!
+        for j in range(rows):
+            result[k][radius][j] = data[k][j][j]  # process the diagonal
+            for i in range(radius):
+                u = band_width - i - 1
+                if rows - radius + i > j > radius - i - 1:
+                    result[k][i][j] = data[k][i - j - 1][j]
+                    result[k][u][j] = data[k][i - j - 1][j]
+                else:
+                    # use nan for better plotting, might be necessary to pad to 0 for training
+                    result[k][i][j] = np.NAN
+                    result[k][u][j] = np.NAN
+    return result
