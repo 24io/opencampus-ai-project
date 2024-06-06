@@ -18,7 +18,7 @@ def shift_normalize(matrix: np.array) -> np.array:
     return (matrix - min_val) / (max_val - min_val)
 
 
-def narrow_to_band(data: np.ndarray, radius: int) -> np.ndarray:
+def narrow_to_band(data: np.ndarray, radius: int, padding_value: np.float32 = np.NAN) -> np.ndarray:
     entries, rows, _ = data.shape
     band_width = 2 * radius + 1
     result = np.zeros((entries, band_width, rows))
@@ -34,8 +34,8 @@ def narrow_to_band(data: np.ndarray, radius: int) -> np.ndarray:
                     result[k][u][j] = data[k][j][j + o]
                 else:
                     # use nan for better plotting, might be necessary to pad to 0 for training
-                    result[k][i][j] = np.NAN
-                    result[k][u][j] = np.NAN
+                    result[k][i][j] = padding_value
+                    result[k][u][j] = padding_value
     return result
 
 
