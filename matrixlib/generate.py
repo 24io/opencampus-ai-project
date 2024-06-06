@@ -19,9 +19,9 @@ def __init_zero_matrices(number_of_matrices: int, dimension: int) -> np.array:
 
 
 def __init_metadata(number_of_matrices: int, dimension: int) -> (np.ndarray, np.ndarray, np.ndarray):
-    noise_densities: np.ndarray = np.zeros(number_of_matrices, dtype=float)
-    block_densities: np.ndarray = np.zeros(number_of_matrices, dtype=float)
-    block_starts: np.ndarray = np.zeros((number_of_matrices, dimension), dtype=bool)
+    noise_densities: np.ndarray = np.zeros(number_of_matrices, dtype=np.float32)
+    block_densities: np.ndarray = np.zeros(number_of_matrices, dtype=np.float32)
+    block_starts: np.ndarray = np.zeros((number_of_matrices, dimension), dtype=np.float32)
     return noise_densities, block_densities, block_starts
 
 
@@ -97,7 +97,7 @@ def add_blocks(
                 index += 1
             else:
                 if block_starts is not None:
-                    block_starts[n][index] = True
+                    block_starts[n][index] = 1.0
                 current_block_size = int(size_generator.rvs())
 
                 # guard against leaving a single element (instead expand current_block_size)
