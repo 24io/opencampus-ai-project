@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 
 def generate_block_vector_hex_string(block_vector: np.array) -> str:
@@ -36,3 +37,7 @@ def narrow_to_band(data: np.ndarray, radius: int) -> np.ndarray:
                     result[k][i][j] = np.NAN
                     result[k][u][j] = np.NAN
     return result
+
+
+def to_tensorflow_dataset(matrix_data: np.ndarray, matrix_labels: np.ndarray) -> tf.data.Dataset:
+    return tf.data.Dataset.from_tensor_slices((matrix_data, matrix_labels))
