@@ -30,7 +30,7 @@ def write_matrix_to_file(
     else:
         d_noise = matrix_metadata.noise_block_density[index]
         d_block = matrix_metadata.true_block_density[index]
-        block_start_hex_str = generate_block_vector_hex_string(matrix_metadata.block_starts)
+        block_start_hex_str = generate_block_vector_hex_string(matrix_metadata.block_starts[index])
         file_name = f"{index:04d}-{d_noise:0.3f}-{d_block:0.3f}-{block_start_hex_str}"
     img.save(f"{base_path}/data/{file_name}.png", "PNG")
 
