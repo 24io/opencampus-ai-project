@@ -3,6 +3,7 @@ import seaborn as sns
 import numpy as np
 
 import matrixlib.util
+from matrixlib.metadata import MatrixMetadata
 
 
 # define color bars and tick labels (e.g. 'rocket', 'rocket_r', 'viridis', 'flare', 'magma' ...)
@@ -42,7 +43,7 @@ def plot_matrices_and_metadata(
         shape: (int, int),
         matrix_indices: list[int],
         matrix_data: np.ndarray,
-        matrix_metadata: np.ndarray,
+        matrix_metadata: MatrixMetadata,
 ) -> None:
     cbar_map_values = VALUE_COLORBAR
     cbar_map_blocks = BLOCK_COLORBAR
@@ -54,7 +55,7 @@ def plot_matrices_and_metadata(
 
     for i in range(num_of_subplots):
         this_index = matrix_indices[i]
-        this_hex_str = matrixlib.util.generate_block_vector_hex_string(matrix_metadata[2][this_index])
+        this_hex_str = matrixlib.util.generate_block_vector_hex_string(matrix_metadata.block_starts[this_index])
 
         sp1 = figure.add_subplot(row_col_number + 2 * i + 1)
         sp1.set_title(f"Matrix [{this_index}] values ({this_hex_str})")
@@ -72,11 +73,10 @@ def plot_matrices_and_metadata(
         sp2 = figure.add_subplot(row_col_number + 2 * i + 2)
         sp2.set_title(f"Matrix [{this_index}] blocks")
         sns.heatmap(
-            generate_block_matrix(matrix_metadata[2][this_index]),
+            generate_block_matrix(matrix_metadata.block_starts[this_index]),
             cmap=cbar_map_blocks,
             xticklabels=False,
             yticklabels=False,
             cbar=False,
             square=True
         )
-
