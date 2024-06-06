@@ -18,13 +18,6 @@ def __init_zero_matrices(number_of_matrices: int, dimension: int) -> np.array:
     return generated_matrix
 
 
-def __init_metadata(number_of_matrices: int, dimension: int) -> (np.ndarray, np.ndarray, np.ndarray):
-    noise_densities: np.ndarray = np.zeros(number_of_matrices, dtype=np.float32)
-    block_densities: np.ndarray = np.zeros(number_of_matrices, dtype=np.float32)
-    block_starts: np.ndarray = np.zeros((number_of_matrices, dimension), dtype=np.float32)
-    return noise_densities, block_densities, block_starts
-
-
 def add_noise(
         matrix_array: np.ndarray,
         density_array: np.ndarray,
