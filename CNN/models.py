@@ -1,16 +1,15 @@
-# Import necessary libraries
 import numpy as np
 import tensorflow as tf
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense, Input, Dropout, Flatten, Conv2D, Activation, BatchNormalization, ZeroPadding2D
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, Activation, BatchNormalization, ZeroPadding2D
 from tensorflow.keras.regularizers import l2
 
-## Baseline Model
+# Baseline Model
 class Baseline(Model):
     def __init(self, input_shape):
         super(Baseline, self).__init__()
-        self.input_shape = Input(shape=input_shape)
+        self.input_shape = tf.keras.layers.Input(shape=input_shape)
 
         # First bottleneck unit
         self.bn1 = BatchNormalization()
