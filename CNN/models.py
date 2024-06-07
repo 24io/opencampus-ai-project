@@ -2,9 +2,9 @@
 import numpy as np
 import tensorflow as tf
 
-from keras.models import Model, Input
-from keras.layers import Dense, Dropout, Flatten, Conv2D, Activation, BatchNormalization, ZeroPadding2D
-from keras.regularizers import l2
+from tensorflow.keras.models import Model, Input
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, Activation, BatchNormalization, ZeroPadding2D
+from tensorflow.keras.regularizers import l2
 
 ## Baseline Model
 class Baseline(Model):
