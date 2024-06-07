@@ -2,8 +2,8 @@
 import numpy as np
 import tensorflow as tf
 
-from tensorflow.keras.models import Model, Input
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, Activation, BatchNormalization, ZeroPadding2D
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Input, Dropout, Flatten, Conv2D, Activation, BatchNormalization, ZeroPadding2D
 from tensorflow.keras.regularizers import l2
 
 ## Baseline Model
