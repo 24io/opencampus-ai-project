@@ -59,3 +59,4 @@ class Baseline(tf.keras.models.Model):
         x = self.result(x)
 
         return x
+
