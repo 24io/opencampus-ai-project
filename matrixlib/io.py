@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image
+from typing import Union
 from matrixlib.util import generate_block_vector_hex_string
 from matrixlib.metadata import MatrixMetadata
 
@@ -8,7 +9,7 @@ def write_matrix_to_file(
         index: int,
         base_path: str,
         matrix_data: np.ndarray,
-        matrix_metadata: MatrixMetadata | None,
+        matrix_metadata: Union[MatrixMetadata, None],
         title: str = None,
 ) -> None:
     rows, cols = matrix_data.shape

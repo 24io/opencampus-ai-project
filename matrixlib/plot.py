@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 import seaborn as sns
 import numpy as np
+from typing import List
 
 import matrixlib.util
 from matrixlib.metadata import MatrixMetadata
@@ -41,7 +42,7 @@ def generate_block_matrix(matrix_block_start_vector: np.ndarray) -> np.array:
 def plot_matrices_and_metadata(
         figure: plt.Figure,
         shape: (int, int),
-        matrix_indices: list[int],
+        matrix_indices: List[int],
         matrix_data: np.ndarray,
         matrix_metadata: MatrixMetadata,
 ) -> None:
