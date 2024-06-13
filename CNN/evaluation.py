@@ -24,9 +24,9 @@ def evaluate_model(model, test_dataset, loss_fn):
         test_loss += loss.numpy() * features.shape[0]
         num_samples += features.shape[0]
 
-        # Convert predictions to class labels
-        predicted_labels.extend(tf.argmax(outputs, axis=1).numpy())
-        true_labels.extend(tf.argmax(labels, axis=1).numpy())
+        # Apply threshold to get binary predictions
+        predicted_labels.extend((outputs.numpy() > 0.5).astype(int))
+        true_labels.extend(labels.numpy().astype(int))
     
     # Average loss over all samples
     average_test_loss = test_loss / num_samples
@@ -35,11 +35,19 @@ def evaluate_model(model, test_dataset, loss_fn):
     true_labels = np.array(true_labels)
     predicted_labels = np.array(predicted_labels)
 
+    # Flatten the arrays for metric calculations
+    true_labels_flat = true_labels.flatten()
+    predicted_labels_flat = predicted_labels.flatten()
+    
+    # Log shapes of true and predicted labels
+    print(f"True Labels Shape: {true_labels_flat.shape}")
+    print(f"Predicted Labels Shape: {predicted_labels_flat.shape}")
+
     # Calculate evaluation metrics
-    accuracy = accuracy_score(true_labels, predicted_labels)
-    precision = precision_score(true_labels, predicted_labels, average='weighted')
-    recall = recall_score(true_labels, predicted_labels, average='weighted')
-    f1 = f1_score(true_labels, predicted_labels, average='weighted')
+    accuracy = accuracy_score(true_labels_flat, predicted_labels_flat)
+    precision = precision_score(true_labels_flat, predicted_labels_flat, average='weighted')
+    recall = recall_score(true_labels_flat, predicted_labels_flat, average='weighted')
+    f1 = f1_score(true_labels_flat, predicted_labels_flat, average='weighted')
 
     # Print the metrics
     print(f"Test Loss: {average_test_loss:.4f}")

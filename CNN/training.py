@@ -5,7 +5,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-
+import os
 
 # Define the training function
 def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epochs, log_dir):
@@ -42,14 +42,24 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
 
     # Define early stopping and model checkpoint
     early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1, restore_best_weights=True)
-    checkpoint = ModelCheckpoint(filepath="best_model_checkpoint.keras", monitor='val_loss', save_best_only=True)
+    checkpoint = ModelCheckpoint(filepath=os.path.join(log_dir, "best_model_checkpoint"), monitor='val_loss', save_best_only=True, save_weights_only=True, save_format='tf')
 
     # Initialize lists to track losses
     train_losses = []
     val_losses = []
 
+    # Set the model attribute in callbacks and manually trigger on_train_begin
+    early_stopping.set_model(model)
+    checkpoint.set_model(model)
+    early_stopping.on_train_begin()
+    checkpoint.on_train_begin()
+
     for epoch in range(num_epochs):
         print(f"Epoch {epoch + 1}/{num_epochs}")
+
+        # Manually trigger on_epoch_begin
+        early_stopping.on_epoch_begin(epoch)
+        checkpoint.on_epoch_begin(epoch)
 
         # Training phase
         epoch_train_loss = train_one_epoch(model, train_dataset, loss_fn, optimizer)
@@ -69,7 +79,7 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
 
         print(f"Train Loss: {epoch_train_loss:.4f} | Validation Loss: {epoch_val_loss:.4f}")
 
-        # Early stopping and checkpointing
+        # Manually trigger on_epoch_end
         early_stopping.on_epoch_end(epoch, logs={'val_loss': epoch_val_loss})
         checkpoint.on_epoch_end(epoch, logs={'val_loss': epoch_val_loss})
 
@@ -77,7 +87,11 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
             print("Early stopping triggered")
             break
 
-    model.save_weights("best_model.keras")
+    model.save_weights(os.path.join(log_dir, "best_model_weights.tf"))
+
+    # Manually trigger on_train_end
+    early_stopping.on_train_end()
+    checkpoint.on_train_end()
 
     return model, train_losses, val_losses
 
@@ -155,4 +169,3 @@ def validate_one_epoch(model, val_dataset, loss_fn):
 
     epoch_val_loss /= len(val_dataset)
     return epoch_val_loss
-
