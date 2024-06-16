@@ -1,7 +1,8 @@
 # encoding: utf-8
 import numpy as np
 import seaborn as sns
-from matplotlib import pyplot as plt
+import scipy.stats as stats
+import matplotlib.pyplot as plt
 
 
 class MatrixData:
@@ -16,15 +17,15 @@ class MatrixData:
             | ``blk_...`` for blocks
             | also note that ``tdata`` here refers to the `true` data values
         """
-        bgr_noise_den: float = 0
-        bgr_noise_min: float = 0
-        bgr_noise_max: float = 0
-        blk_noise_den: float = 0
-        blk_noise_min: float = 0
-        blk_noise_max: float = 0
-        blk_tdata_den: float = 0
-        blk_tdata_min: float = 0
-        blk_tdata_max: float = 0
+        bgr_noise_den: float = None
+        bgr_noise_min: float = None
+        bgr_noise_max: float = None
+        blk_noise_den: float = None
+        blk_noise_min: float = None
+        blk_noise_max: float = None
+        blk_tdata_den: float = None
+        blk_tdata_min: float = None
+        blk_tdata_max: float = None
 
         def __init__(self):
             pass
@@ -40,17 +41,28 @@ class MatrixData:
     bgr_noise_val_min: np.float32
     bgr_noise_val_max: np.float32
     # noise block parameters
+    blk_noise_len_min: int
+    blk_noise_len_max: int
+    blk_noise_len_avg: float
+    blk_noise_len_sdv: float
+    blk_noise_gap_chn: float
     blk_noise_den_min: float
     blk_noise_den_max: float
     blk_noise_val_min: np.float32
     blk_noise_val_max: np.float32
     # true data block parameters
+    blk_tdata_len_min: int
+    blk_tdata_len_max: int
+    blk_tdata_len_avg: float
+    blk_tdata_len_sdv: float
+    blk_tdata_gap_chn: float
     blk_tdata_den_min: float
     blk_tdata_den_max: float
     blk_tdata_val_min: np.float32
     blk_tdata_val_max: np.float32
 
     # debug data
+    seed: int = None
     debug: bool = False
 
     # generated output
@@ -60,33 +72,59 @@ class MatrixData:
     block_noise_start_labels: np.ndarray = None
     metadata: list[MetaData] = None
 
+    # statistics data
+    block_noise_sizes: list[int] = None
+    block_data_sizes: list[int] = None
+
     def __init__(
             self,
             dimension: int,
             band_radius: int,
             sample_size: int,
-            background_noise_density_range: (float, float),
+            background_noise_density_range: tuple[float, float],
             background_noise_value_range: (np.float32, np.float32),
-            block_noise_density_range: (float, float),
+            block_noise_density_range: tuple[float, float],
             block_noise_value_range: (np.float32, np.float32),
-            block_data_density_range: (float, float),
+            block_noise_size_range: tuple[int, int],
+            block_noise_size_average: float,
+            block_noise_size_std_dev: float,
+            block_noise_size_gap_chance: float,
+            block_data_density_range: tuple[float, float],
             block_data_value_range: (np.float32, np.float32),
+            block_data_size_range: tuple[int, int],
+            block_data_size_average: float,
+            block_data_size_std_dev: float,
+            block_data_size_gap_chance: float,
+            seed: int = None,
             force_invertible: bool = False,
             print_debug: bool = False,
     ):
         self.dimension = dimension
         self.sample_size = sample_size
         self.band_radius = band_radius
+        # background noise parameters
         self.bgr_noise_den_min, self.bgr_noise_den_max = background_noise_density_range
         self.bgr_noise_val_min, self.bgr_noise_val_max = background_noise_value_range
+        # block noise parameters
         self.blk_noise_den_min, self.blk_noise_den_max = block_noise_density_range
         self.blk_noise_val_min, self.blk_noise_val_max = block_noise_value_range
+        self.blk_noise_len_min, self.blk_noise_len_max = block_noise_size_range
+        self.blk_noise_len_avg = block_noise_size_average
+        self.blk_noise_len_sdv = block_noise_size_std_dev
+        self.blk_noise_gap_chn = block_noise_size_gap_chance
+        # block true data parameters
         self.blk_tdata_den_min, self.blk_tdata_den_max = block_data_density_range
         self.blk_tdata_val_min, self.blk_tdata_val_max = block_data_value_range
-
+        self.blk_tdata_len_min, self.blk_tdata_len_max = block_data_size_range
+        self.blk_tdata_len_avg = block_data_size_average
+        self.blk_tdata_len_sdv = block_data_size_std_dev
+        self.blk_tdata_gap_chn = block_data_size_gap_chance
+        # flags used during generation
         self.force_invertible = force_invertible
+        self.seed = seed
         self.debug = print_debug
 
+        # initialize data arrays and generate matrix data
         self.__init_data_size()
         self.__generate_matrices()
 
@@ -118,7 +156,29 @@ class MatrixData:
         return
 
     def __generate_matrices(self):
+        if self.seed is not None:
+            np.random.seed(self.seed)
+
         self.__add_background_noise()
+        self.block_noise_sizes = self.__add_blocks(generate_type="noise")
+        self.block_data_sizes = self.__add_blocks(generate_type="data")
+
+        if self.debug:
+            # make a histogram for the block sizes
+            plt.hist(
+                self.block_noise_sizes,
+                bins=list(range(self.blk_noise_len_min, self.blk_noise_len_max + 1)),
+                alpha=0.5,
+                label='Noise'
+            )
+            plt.hist(
+                self.block_data_sizes,
+                bins=list(range(self.blk_tdata_len_min, self.blk_tdata_len_max + 1)),
+                alpha=0.5,
+                label='Data'
+            )
+            plt.legend(loc='upper right')
+            plt.show()
 
     def __add_background_noise(self) -> None:
         # create some random noise values (some might be overridden later)
@@ -132,13 +192,101 @@ class MatrixData:
                         self.matrices[n][j][i] = np.float32(value)
                         self.matrices[n][i][j] = np.float32(value)
 
+    def __add_blocks(self, generate_type: str) -> list[int]:
+        if generate_type == "noise":
+            generate_true_data = False
+        elif generate_type == "data":
+            generate_true_data = True
+        else:
+            raise ValueError(f"generate_type {generate_type} not supported")
+
+        # select proper block type
+        block_size_average: float = self.blk_tdata_len_avg if generate_true_data else self.blk_noise_len_avg
+        block_size_std_dev: float = self.blk_tdata_len_sdv if generate_true_data else self.blk_noise_len_sdv
+        block_size_min: int = self.blk_tdata_len_min if generate_true_data else self.blk_noise_len_min
+        block_size_max: int = self.blk_tdata_len_max if generate_true_data else self.blk_noise_len_max
+        density_min: float = self.blk_tdata_den_min if generate_true_data else self.blk_noise_den_min
+        density_max: float = self.blk_tdata_den_max if generate_true_data else self.blk_noise_den_max
+        block_gap_chance: float = self.blk_tdata_gap_chn if generate_true_data else self.blk_noise_gap_chn
+        block_starts: np.ndarray = self.block_data_start_labels if generate_true_data else self.block_data_start_labels
+        value_min: np.float32 = self.blk_tdata_val_min if generate_true_data else self.blk_noise_val_min
+        value_max: np.float32 = self.blk_tdata_val_max if generate_true_data else self.blk_noise_val_max
+
+        # create block size generator for truncated bell curve
+        scale = int(block_size_average * block_size_std_dev)
+        lower_bound_offset = (block_size_min - block_size_average) / scale
+        upper_bound_offset = (block_size_max - block_size_average) / scale
+        size_generator = stats.truncnorm(lower_bound_offset, upper_bound_offset, loc=block_size_average, scale=scale)
+
+        # create blocks
+        size_collector: list[int] = []
+        for n in range(self.sample_size):
+            # generate density for current matrix and add to metadata
+            block_density: float = np.random.uniform(density_min, density_max)
+            if generate_true_data:
+                self.metadata[n].blk_tdata_den = block_density
+            else:
+                self.metadata[n].blk_noise_den = block_density
+
+            index = 0
+            while index < self.dimension - 1:
+                # add random gap depending on gap chance
+                if np.random.uniform(0.0, 1.0) < block_gap_chance:
+                    block_starts[index] = -1  # denote end of block if gaps are allowed
+                    index += 1
+                else:
+                    block_starts[n][index] = 1.0
+                    current_block_size: int = int(size_generator.rvs())
+
+                    # guard against leaving a single element (instead expand current_block_size)
+                    if self.dimension - (current_block_size + index) < block_size_min:
+                        current_block_size = self.dimension - index - 1
+
+                    # guard against overshooting the matrix size
+                    if current_block_size + index >= self.dimension:
+                        current_block_size = self.dimension - index
+                        if current_block_size < block_size_max:
+                            raise ValueError("Clamped block size is too small")
+
+                    for j in range(current_block_size):
+                        a = j + index
+                        # set diagonal to value
+                        if np.random.random() < block_density:
+                            self.matrices[n][a][a] = np.random.uniform(value_min, value_max)
+                        for i in range(j):
+                            b = i + index
+                            if np.random.random() < block_density:
+                                value = np.random.uniform(value_min, value_max)
+                                self.matrices[n][a][b] = value
+                                self.matrices[n][b][a] = value
+                    index += current_block_size
+                    # collect size for histogram creation
+                    size_collector.append(current_block_size)
+
+        return size_collector
+
 
 if __name__ == "__main__":
     test_matrices = MatrixData(
-        dimension=64, band_radius=10, sample_size=1000,
-        background_noise_density_range=(0.3, 0.5), background_noise_value_range=(0.0, 0.5),
-        block_noise_density_range=(0.3, 0.5), block_noise_value_range=(0.3, 1.0),
-        block_data_density_range=(0.5, 0.7), block_data_value_range=(0.3, 1.0),
+        dimension=64,
+        band_radius=10,
+        sample_size=100,
+        background_noise_density_range=(0.3, 0.5),
+        background_noise_value_range=(0.0, 0.5),
+        block_noise_density_range=(0.3, 0.5),
+        block_noise_value_range=(0.3, 1.0),
+        block_noise_size_range=(3, 32),
+        block_noise_size_average=10,
+        block_noise_size_std_dev=0.66,
+        block_noise_size_gap_chance=0.5,
+        block_data_density_range=(0.5, 0.7),
+        block_data_value_range=(0.3, 1.0),
+        block_data_size_range=(2, 32),
+        block_data_size_average=10,
+        block_data_size_std_dev=0.66,
+        block_data_size_gap_chance=0.0,
+        seed=42,
+        force_invertible=False,
         print_debug=True
     )
 
