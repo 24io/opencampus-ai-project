@@ -86,6 +86,7 @@ class MatrixData:
         self.debug = print_debug
 
         self.__init_data_size()
+        self.__generate_matrices()
 
     def __init_data_size(self) -> None:
         n: int = self.sample_size
@@ -113,6 +114,21 @@ class MatrixData:
                   f"with a memory usage of {self.bands.nbytes / bytes_per_mib:7.3f} MiB")
 
         return
+
+    def __generate_matrices(self):
+        self.__add_background_noise()
+
+    def __add_background_noise(self) -> None:
+        # create some random noise values (some might be overridden later)
+        for n in range(self.sample_size):
+            noise_density = np.random.uniform(self.bgr_noise_den_min, self.bgr_noise_den_max)
+            self.metadata[n].bgr_noise_den = noise_density  # store generated noise density in metadata field
+            for j in range(self.dimension):
+                for i in range(j):
+                    if np.random.random() < noise_density:
+                        value: float = np.random.uniform(self.bgr_noise_val_min, self.bgr_noise_val_max)
+                        self.matrices[n][j][i] = np.float32(value)
+                        self.matrices[n][i][j] = np.float32(value)
 
 
 if __name__ == "__main__":
