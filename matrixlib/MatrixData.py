@@ -1,5 +1,7 @@
 # encoding: utf-8
 import numpy as np
+import seaborn as sns
+from matplotlib import pyplot as plt
 
 
 class MatrixData:
@@ -139,3 +141,16 @@ if __name__ == "__main__":
         block_data_density_range=(0.5, 0.7), block_data_value_range=(0.3, 1.0),
         print_debug=True
     )
+
+    data_fig = plt.figure(num=1, figsize=(6, 5))
+    sns.heatmap(
+        test_matrices.matrices[0],
+        cmap='rocket',
+        cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
+        xticklabels=False,
+        yticklabels=False,
+        square=True,
+        vmin=0,
+        vmax=1
+    )
+    data_fig.show()
