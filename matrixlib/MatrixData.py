@@ -35,6 +35,7 @@ class MatrixData:
     band_radius: int
     dimension: int
     force_invertible: bool
+    band_padding_value: np.float32
     # background parameters
     bgr_noise_den_min: float
     bgr_noise_den_max: float
@@ -62,8 +63,8 @@ class MatrixData:
     blk_tdata_val_max: np.float32
 
     # debug data
-    seed: int = None
-    debug: bool = False
+    seed: int
+    debug: bool
 
     # generated output
     matrices: np.ndarray = None
@@ -95,6 +96,7 @@ class MatrixData:
             block_data_size_average: float,
             block_data_size_std_dev: float,
             block_data_size_gap_chance: float,
+            band_padding_value: np.float32 = np.NAN,
             seed: int = None,
             force_invertible: bool = False,
             print_debug: bool = False,
@@ -119,7 +121,8 @@ class MatrixData:
         self.blk_tdata_len_avg = block_data_size_average
         self.blk_tdata_len_sdv = block_data_size_std_dev
         self.blk_tdata_gap_chn = block_data_size_gap_chance
-        # flags used during generation
+        # flags and values used during generation
+        self.band_padding_value = band_padding_value
         self.force_invertible = force_invertible
         self.seed = seed
         self.debug = print_debug
@@ -127,16 +130,18 @@ class MatrixData:
         # initialize data arrays and generate matrix data
         self.__init_data_size()
         self.__generate_matrices()
+        self.__narrow_to_band()
 
     def __init_data_size(self) -> None:
         n: int = self.sample_size
         dim: int = self.dimension
         r: int = self.band_radius
+        w: int = 2 * r + 1  # the bands width is diagonal plus band radius in each direction
 
         self.matrices = np.zeros(shape=(n, dim, dim), dtype=np.float32)
         self.block_data_start_labels = np.zeros(shape=(n, dim), dtype=bool)
         self.block_noise_start_labels = np.zeros(shape=(n, dim), dtype=bool)
-        self.bands = np.zeros(shape=(n, dim, r), dtype=np.float32)
+        self.bands = np.zeros(shape=(n, w, dim), dtype=np.float32)
 
         self.metadata = []
         for i in range(n):
@@ -265,9 +270,26 @@ class MatrixData:
 
         return size_collector
 
+    def __narrow_to_band(self) -> None:
+        for k in range(self.sample_size):
+            # be wary of cache effects here!
+            for j in range(self.dimension):
+                self.bands[k][self.band_radius][j] = self.matrices[k][j][j]  # process the diagonal
+                for i in range(self.band_radius):
+                    o = i - self.band_radius
+                    u = 2 * self.band_radius - i
+                    if j > self.band_radius - i - 1:
+                        self.bands[k][i][j] = self.matrices[k][j][j + o]
+                        self.bands[k][u][j] = self.matrices[k][j][j + o]
+                    else:
+                        # use nan for better plotting, might be necessary to pad to 0 for training
+                        self.bands[k][i][j] = self.band_padding_value
+                        self.bands[k][u][j] = self.band_padding_value
+        return
+
 
 if __name__ == "__main__":
-    test_matrices = MatrixData(
+    test_data = MatrixData(
         dimension=64,
         band_radius=10,
         sample_size=100,
@@ -290,9 +312,10 @@ if __name__ == "__main__":
         print_debug=True
     )
 
+    # plot the matrix
     data_fig = plt.figure(num=1, figsize=(6, 5))
     sns.heatmap(
-        test_matrices.matrices[0],
+        test_data.matrices[0],
         cmap='rocket',
         cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
         xticklabels=False,
@@ -302,3 +325,17 @@ if __name__ == "__main__":
         vmax=1
     )
     data_fig.show()
+
+    # plot the band
+    band_fig = plt.figure(num=2, figsize=(8, 2))
+    sns.heatmap(
+        test_data.bands[0],
+        cmap='rocket',
+        cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
+        xticklabels=False,
+        yticklabels=False,
+        square=True,
+        vmin=0,
+        vmax=1
+    )
+    band_fig.show()
