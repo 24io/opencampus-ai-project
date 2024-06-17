@@ -213,7 +213,7 @@ class MatrixData:
         density_min: float = self.blk_tdata_den_min if generate_true_data else self.blk_noise_den_min
         density_max: float = self.blk_tdata_den_max if generate_true_data else self.blk_noise_den_max
         block_gap_chance: float = self.blk_tdata_gap_chn if generate_true_data else self.blk_noise_gap_chn
-        block_starts: np.ndarray = self.block_data_start_labels if generate_true_data else self.block_data_start_labels
+        block_starts: np.ndarray = self.block_data_start_labels if generate_true_data else self.block_noise_start_labels
         value_min: np.float32 = self.blk_tdata_val_min if generate_true_data else self.blk_noise_val_min
         value_max: np.float32 = self.blk_tdata_val_max if generate_true_data else self.blk_noise_val_max
 
