@@ -10,6 +10,7 @@ BLOCK_COLORBAR = 'flare'
 
 
 def generate_block_matrix(matrix_block_start_vector: np.ndarray) -> np.array:
+    print(f"matrix block start -> {matrix_block_start_vector}")
     dimension = matrix_block_start_vector.shape[0]
     block_matrix_array = np.zeros((dimension, dimension), dtype=float)
     block_start_array = matrix_block_start_vector
@@ -56,7 +57,7 @@ def plot_matrices_and_metadata(
         sp1 = figure.add_subplot(row_col_number + 2 * i + 1)
         sp1.set_title(f"Matrix [{this_index}] values ({this_hex_str})")
         sns.heatmap(
-            matrix_data[this_index],
+            matrix_data.matrices[this_index],
             cmap=cbar_map_values,
             cbar_kws=cbar_kws,
             xticklabels=False,
