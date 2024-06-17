@@ -1,14 +1,16 @@
 import numpy as np
 from PIL import Image
-from matrixlib.util import generate_block_vector_hex_string
-from matrixlib.metadata import MatrixMetadata
+from . import util
 
 
 def write_matrix_to_file(
         index: int,
         base_path: str,
         matrix_data: np.ndarray,
-        matrix_metadata: MatrixMetadata | None,
+        block_starts: np.ndarray,
+        noise_background_density: float,
+        noise_block_density: float,
+        true_block_density: float,
         title: str = None,
 ) -> None:
     rows, cols = matrix_data.shape
@@ -28,10 +30,14 @@ def write_matrix_to_file(
     if title is not None:
         file_name = title
     else:
-        d_noise = matrix_metadata.noise_block_density[index]
-        d_block = matrix_metadata.true_block_density[index]
-        block_start_hex_str = generate_block_vector_hex_string(matrix_metadata.block_starts[index])
-        file_name = f"{index:04d}-{d_noise:0.3f}-{d_block:0.3f}-{block_start_hex_str}"
+        block_start_hex_str = util.generate_block_vector_hex_string(block_starts)
+        file_name = (
+            f"{index:04d}-" +
+            f"{noise_background_density:0.3f}-" +
+            f"{noise_block_density:0.3f}-" +
+            f"{true_block_density:0.3f}-" +
+            f"{block_start_hex_str}"
+        )
     img.save(f"{base_path}/data/{file_name}.png", "PNG")
 
 

@@ -96,10 +96,10 @@ class MatrixData:
             block_data_size_average: float,
             block_data_size_std_dev: float,
             block_data_size_gap_chance: float,
-            band_padding_value: np.float32 = np.NAN,
             seed: int = None,
             force_invertible: bool = False,
             print_debug: bool = False,
+            band_padding_value: np.float32 = np.NAN,
     ):
         self.dimension = dimension
         self.sample_size = sample_size
@@ -139,8 +139,8 @@ class MatrixData:
         w: int = 2 * r + 1  # the bands width is diagonal plus band radius in each direction
 
         self.matrices = np.zeros(shape=(n, dim, dim), dtype=np.float32)
-        self.block_data_start_labels = np.zeros(shape=(n, dim), dtype=bool)
-        self.block_noise_start_labels = np.zeros(shape=(n, dim), dtype=bool)
+        self.block_data_start_labels = np.zeros(shape=(n, dim), dtype=np.int8)
+        self.block_noise_start_labels = np.zeros(shape=(n, dim), dtype=np.int8)
         self.bands = np.zeros(shape=(n, w, dim), dtype=np.float32)
 
         self.metadata = []
@@ -213,7 +213,7 @@ class MatrixData:
         density_min: float = self.blk_tdata_den_min if generate_true_data else self.blk_noise_den_min
         density_max: float = self.blk_tdata_den_max if generate_true_data else self.blk_noise_den_max
         block_gap_chance: float = self.blk_tdata_gap_chn if generate_true_data else self.blk_noise_gap_chn
-        block_starts: np.ndarray = self.block_data_start_labels if generate_true_data else self.block_data_start_labels
+        block_starts: np.ndarray = self.block_data_start_labels if generate_true_data else self.block_noise_start_labels
         value_min: np.float32 = self.blk_tdata_val_min if generate_true_data else self.blk_noise_val_min
         value_max: np.float32 = self.blk_tdata_val_max if generate_true_data else self.blk_noise_val_max
 
@@ -235,12 +235,14 @@ class MatrixData:
 
             index = 0
             while index < self.dimension - 1:
+                block_starts[n][index] = 0  # initialize the value
                 # add random gap depending on gap chance
-                if np.random.uniform(0.0, 1.0) < block_gap_chance:
-                    block_starts[index] = -1  # denote end of block if gaps are allowed
+                draw: float = np.random.uniform(0.0, 1.0)
+                if draw < block_gap_chance:
+                    block_starts[n][index] = -1  # denote end of block if gaps are allowed
                     index += 1
                 else:
-                    block_starts[n][index] = 1.0
+                    block_starts[n][index] = 1
                     current_block_size: int = int(size_generator.rvs())
 
                     # guard against leaving a single element (instead expand current_block_size)
