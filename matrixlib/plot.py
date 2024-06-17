@@ -2,9 +2,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import numpy as np
 
-import matrixlib.util
-from matrixlib.metadata import MatrixMetadata
-
+from . import core, util
 
 # define color bars and tick labels (e.g. 'rocket', 'rocket_r', 'viridis', 'flare', 'magma' ...)
 VALUE_COLORBAR = 'rocket'
@@ -40,22 +38,20 @@ def generate_block_matrix(matrix_block_start_vector: np.ndarray) -> np.array:
 
 def plot_matrices_and_metadata(
         figure: plt.Figure,
-        shape: (int, int),
+        fig_shape: (int, int),
         matrix_indices: list[int],
-        matrix_data: np.ndarray,
-        matrix_metadata: MatrixMetadata,
+        matrix_data: core.MatrixData,
 ) -> None:
     cbar_map_values = VALUE_COLORBAR
     cbar_map_blocks = BLOCK_COLORBAR
     cbar_kws = {'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
 
-    _, dim, _ = matrix_data.shape
     num_of_subplots = len(matrix_indices)
-    row_col_number = shape[0] * 100 + shape[1] * 10
+    row_col_number = fig_shape[0] * 100 + fig_shape[1] * 10
 
     for i in range(num_of_subplots):
         this_index = matrix_indices[i]
-        this_hex_str = matrixlib.util.generate_block_vector_hex_string(matrix_metadata.block_starts[this_index])
+        this_hex_str = util.generate_block_vector_hex_string(matrix_data.block_data_start_labels[this_index])
 
         sp1 = figure.add_subplot(row_col_number + 2 * i + 1)
         sp1.set_title(f"Matrix [{this_index}] values ({this_hex_str})")
@@ -73,7 +69,7 @@ def plot_matrices_and_metadata(
         sp2 = figure.add_subplot(row_col_number + 2 * i + 2)
         sp2.set_title(f"Matrix [{this_index}] blocks")
         sns.heatmap(
-            generate_block_matrix(matrix_metadata.block_starts[this_index]),
+            generate_block_matrix(matrix_data.block_data_start_labels[this_index]),
             cmap=cbar_map_blocks,
             xticklabels=False,
             yticklabels=False,
