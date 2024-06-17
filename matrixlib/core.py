@@ -96,10 +96,10 @@ class MatrixData:
             block_data_size_average: float,
             block_data_size_std_dev: float,
             block_data_size_gap_chance: float,
-            band_padding_value: np.float32 = np.NAN,
             seed: int = None,
             force_invertible: bool = False,
             print_debug: bool = False,
+            band_padding_value: np.float32 = np.NAN,
     ):
         self.dimension = dimension
         self.sample_size = sample_size
