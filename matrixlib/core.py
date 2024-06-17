@@ -139,8 +139,8 @@ class MatrixData:
         w: int = 2 * r + 1  # the bands width is diagonal plus band radius in each direction
 
         self.matrices = np.zeros(shape=(n, dim, dim), dtype=np.float32)
-        self.block_data_start_labels = np.zeros(shape=(n, dim), dtype=bool)
-        self.block_noise_start_labels = np.zeros(shape=(n, dim), dtype=bool)
+        self.block_data_start_labels = np.zeros(shape=(n, dim), dtype=np.int8)
+        self.block_noise_start_labels = np.zeros(shape=(n, dim), dtype=np.int8)
         self.bands = np.zeros(shape=(n, w, dim), dtype=np.float32)
 
         self.metadata = []
@@ -235,12 +235,14 @@ class MatrixData:
 
             index = 0
             while index < self.dimension - 1:
+                block_starts[n][index] = 0  # initialize the value
                 # add random gap depending on gap chance
-                if np.random.uniform(0.0, 1.0) < block_gap_chance:
-                    block_starts[index] = -1  # denote end of block if gaps are allowed
+                draw: float = np.random.uniform(0.0, 1.0)
+                if draw < block_gap_chance:
+                    block_starts[n][index] = -1  # denote end of block if gaps are allowed
                     index += 1
                 else:
-                    block_starts[n][index] = 1.0
+                    block_starts[n][index] = 1
                     current_block_size: int = int(size_generator.rvs())
 
                     # guard against leaving a single element (instead expand current_block_size)
