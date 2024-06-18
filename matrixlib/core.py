@@ -216,7 +216,8 @@ class MatrixData:
             # copy lower triangular back onto upper triangular via transpose
             self.matrices[n][np.triu_indices(dim)] = self.matrices[n].T[np.triu_indices(dim)]
             # check if symmetrical
-            print(np.allclose(self.matrices[n], self.matrices[n].T, rtol=1e-05, atol=1e-08))
+            if self.debug:
+                print(f"[{n}] symmetric: {np.allclose(self.matrices[n], self.matrices[n].T, rtol=1e-05, atol=1e-08)}")
 
     def __add_blocks(self, generate_type: str) -> list[int]:
         if generate_type == "noise":
