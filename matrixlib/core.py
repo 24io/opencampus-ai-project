@@ -34,7 +34,7 @@ class MatrixData:
     sample_size: int
     band_radius: int
     dimension: int
-    force_invertible: bool
+    determinant_cutoff: float
     band_padding_value: np.float32
     # background parameters
     bgr_noise_den_min: float
@@ -97,7 +97,7 @@ class MatrixData:
             block_data_size_std_dev: float,
             block_data_size_gap_chance: float,
             seed: int = None,
-            force_invertible: bool = False,
+            determinant_cutoff: float = 0.0,
             print_debug: bool = False,
             band_padding_value: np.float32 = np.NAN,
     ):
@@ -123,7 +123,7 @@ class MatrixData:
         self.blk_tdata_gap_chn = block_data_size_gap_chance
         # flags and values used during generation
         self.band_padding_value = band_padding_value
-        self.force_invertible = force_invertible
+        self.determinant_cutoff = determinant_cutoff
         self.seed = seed
         self.debug = print_debug
 
@@ -164,8 +164,15 @@ class MatrixData:
         if self.seed is not None:
             np.random.seed(self.seed)
 
+        if self.debug:
+            print("generating matrices...")
+            print("    ...adding background noise")
         self.__add_background_noise()
+        if self.debug:
+            print("    ...adding noise blocks")
         self.block_noise_sizes = self.__add_blocks(generate_type="noise")
+        if self.debug:
+            print("    ...adding data blocks")
         self.block_data_sizes = self.__add_blocks(generate_type="data")
 
         if self.debug:
@@ -223,54 +230,96 @@ class MatrixData:
         upper_bound_offset = (block_size_max - block_size_average) / scale
         size_generator = stats.truncnorm(lower_bound_offset, upper_bound_offset, loc=block_size_average, scale=scale)
 
+        # debug counter
+        generated_counter: int = 0
+
         # create blocks
         size_collector: list[int] = []
-        for n in range(self.sample_size):
+        for index in range(self.sample_size):
             # generate density for current matrix and add to metadata
             block_density: float = np.random.uniform(density_min, density_max)
             if generate_true_data:
-                self.metadata[n].blk_tdata_den = block_density
+                self.metadata[index].blk_tdata_den = block_density
             else:
-                self.metadata[n].blk_noise_den = block_density
+                self.metadata[index].blk_noise_den = block_density
 
-            index = 0
-            while index < self.dimension - 1:
-                block_starts[n][index] = 0  # initialize the value
-                # add random gap depending on gap chance
-                draw: float = np.random.uniform(0.0, 1.0)
-                if draw < block_gap_chance:
-                    block_starts[n][index] = -1  # denote end of block if gaps are allowed
-                    index += 1
-                else:
-                    block_starts[n][index] = 1
-                    current_block_size: int = int(size_generator.rvs())
+            matrix_invalid: bool = True
+            while matrix_invalid:
+                matrix_invalid = self.__generate_single_matrix(
+                    index,
+                    size_collector,
+                    size_generator,
+                    block_starts,
+                    block_size_min,
+                    block_size_max,
+                    block_density,
+                    block_gap_chance,
+                    value_min,
+                    value_max,
+                )
+                generated_counter += 1
 
-                    # guard against leaving a single element (instead expand current_block_size)
-                    if self.dimension - (current_block_size + index) < block_size_min:
-                        current_block_size = self.dimension - index - 1
-
-                    # guard against overshooting the matrix size
-                    if current_block_size + index >= self.dimension:
-                        current_block_size = self.dimension - index
-                        if current_block_size < block_size_max:
-                            raise ValueError("Clamped block size is too small")
-
-                    for j in range(current_block_size):
-                        a = j + index
-                        # set diagonal to value
-                        if np.random.random() < block_density:
-                            self.matrices[n][a][a] = np.random.uniform(value_min, value_max)
-                        for i in range(j):
-                            b = i + index
-                            if np.random.random() < block_density:
-                                value = np.random.uniform(value_min, value_max)
-                                self.matrices[n][a][b] = value
-                                self.matrices[n][b][a] = value
-                    index += current_block_size
-                    # collect size for histogram creation
-                    size_collector.append(current_block_size)
+        if self.debug:
+            invalid_matrices = generated_counter - self.sample_size
+            print(f"Generated a total of {generated_counter} matrices since {invalid_matrices} were invalid.")
 
         return size_collector
+
+    def __generate_single_matrix(
+        self,
+        matrix_index: int,
+        size_collector: list[int],
+        size_generator: stats.truncnorm,
+        block_starts: np.ndarray,
+        block_size_min: int,
+        block_size_max: int,
+        block_density: float,
+        block_gap_chance: float,
+        val_min: np.float32,
+        val_max: np.float32,
+    ) -> bool:
+        row_index = 0
+        while row_index < self.dimension - 1:
+            block_starts[matrix_index][row_index] = 0  # initialize the value
+            # add random gap depending on gap chance
+            draw: float = np.random.uniform(0.0, 1.0)
+            if draw < block_gap_chance:
+                block_starts[matrix_index][row_index] = -1  # denote end of block if gaps are allowed
+                row_index += 1
+            else:
+                block_starts[matrix_index][row_index] = 1
+                current_block_size: int = int(size_generator.rvs())
+
+                # guard against leaving a single element (instead expand current_block_size)
+                if self.dimension - (current_block_size + row_index) < block_size_min:
+                    current_block_size = self.dimension - row_index - 1
+
+                # guard against overshooting the matrix size
+                if current_block_size + row_index >= self.dimension:
+                    current_block_size = self.dimension - row_index
+                    if current_block_size < block_size_max:
+                        raise ValueError("Clamped block size is too small")
+
+                for j in range(current_block_size):
+                    a = j + row_index
+                    # set diagonal to value
+                    if np.random.random() < block_density:
+                        self.matrices[matrix_index][a][a] = np.random.uniform(val_min, val_max)
+                    for i in range(j):
+                        b = i + row_index
+                        if np.random.random() < block_density:
+                            value = np.random.uniform(val_min, val_max)
+                            self.matrices[matrix_index][a][b] = value
+                            self.matrices[matrix_index][b][a] = value
+                row_index += current_block_size
+                # collect size for histogram creation
+                size_collector.append(current_block_size)
+
+        det: float = np.linalg.det(self.matrices[matrix_index])
+        matrix_invalid: bool = abs(det) < self.determinant_cutoff
+        if matrix_invalid and self.debug:
+            print(f"determinant {det} of [{matrix_index}] is below cutoff threshold, recalculating.")
+        return matrix_invalid
 
     def __narrow_to_band(self) -> None:
         for k in range(self.sample_size):
@@ -294,7 +343,7 @@ if __name__ == "__main__":
     test_data = MatrixData(
         dimension=64,
         band_radius=10,
-        sample_size=100,
+        sample_size=1000,
         background_noise_density_range=(0.3, 0.5),
         background_noise_value_range=(0.0, 0.5),
         block_noise_density_range=(0.3, 0.5),
@@ -310,7 +359,7 @@ if __name__ == "__main__":
         block_data_size_std_dev=0.66,
         block_data_size_gap_chance=0.0,
         seed=42,
-        force_invertible=False,
+        determinant_cutoff=0.1,
         print_debug=True
     )
 
