@@ -1,4 +1,7 @@
 # encoding: utf-8
+import time
+from datetime import datetime
+
 import numpy as np
 import seaborn as sns
 import scipy.stats as stats
@@ -194,15 +197,26 @@ class MatrixData:
 
     def __add_background_noise(self) -> None:
         # create some random noise values (some might be overridden later)
+        start: float = time.perf_counter()
+        print(f"timestamp: {start}")
         for n in range(self.sample_size):
             noise_density = np.random.uniform(self.bgr_noise_den_min, self.bgr_noise_den_max)
             self.metadata[n].bgr_noise_den = noise_density  # store generated noise density in metadata field
-            for j in range(self.dimension):
-                for i in range(j):
-                    if np.random.random() < noise_density:
-                        value: float = np.random.uniform(self.bgr_noise_val_min, self.bgr_noise_val_max)
-                        self.matrices[n][j][i] = np.float32(value)
-                        self.matrices[n][i][j] = np.float32(value)
+
+            dim: int = self.dimension
+            low = self.bgr_noise_val_min
+            high = self.bgr_noise_val_max
+
+            # initialize truth-matrix (selector)
+            b_mat: np.ndarray = np.zeros((dim, dim), dtype=bool)
+            # populate lower triangular matrix selector
+            b_mat[np.tril_indices(dim)] = np.random.uniform(size=((dim * (dim + 1)) // 2)) < noise_density
+            # add values to matrix's lower triangular based on selector
+            self.matrices[n][b_mat] = np.random.uniform(low, high, size=b_mat.sum())
+            # copy lower triangular back onto upper triangular via transpose
+            self.matrices[n][np.triu_indices(dim)] = self.matrices[n].T[np.triu_indices(dim)]
+            # check if symmetrical
+            print(np.allclose(self.matrices[n], self.matrices[n].T, rtol=1e-05, atol=1e-08))
 
     def __add_blocks(self, generate_type: str) -> list[int]:
         if generate_type == "noise":
@@ -343,7 +357,7 @@ if __name__ == "__main__":
     test_data = MatrixData(
         dimension=64,
         band_radius=10,
-        sample_size=1000,
+        sample_size=10,
         background_noise_density_range=(0.3, 0.5),
         background_noise_value_range=(0.0, 0.5),
         block_noise_density_range=(0.3, 0.5),
@@ -359,34 +373,36 @@ if __name__ == "__main__":
         block_data_size_std_dev=0.66,
         block_data_size_gap_chance=0.0,
         seed=42,
-        determinant_cutoff=0.1,
+        determinant_cutoff=0.01,
         print_debug=True
     )
 
-    # plot the matrix
-    data_fig = plt.figure(num=1, figsize=(6, 5))
-    sns.heatmap(
-        test_data.matrices[0],
-        cmap='rocket',
-        cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
-        xticklabels=False,
-        yticklabels=False,
-        square=True,
-        vmin=0,
-        vmax=1
-    )
-    data_fig.show()
+    for i in range(10):
+        # plot the matrix
+        data_fig = plt.figure(num=i, figsize=(6, 5))
+        data_fig.suptitle(f"test [{i}] - {test_data.metadata[i].bgr_noise_den}")
+        sns.heatmap(
+            test_data.matrices[i],
+            cmap='rocket',
+            cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
+            xticklabels=False,
+            yticklabels=False,
+            square=True,
+            vmin=0,
+            vmax=1
+        )
+        data_fig.show()
 
-    # plot the band
-    band_fig = plt.figure(num=2, figsize=(8, 2))
-    sns.heatmap(
-        test_data.bands[0],
-        cmap='rocket',
-        cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
-        xticklabels=False,
-        yticklabels=False,
-        square=True,
-        vmin=0,
-        vmax=1
-    )
-    band_fig.show()
+    # # plot the band
+    # band_fig = plt.figure(num=2, figsize=(8, 2))
+    # sns.heatmap(
+    #     test_data.bands[0],
+    #     cmap='rocket',
+    #     cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
+    #     xticklabels=False,
+    #     yticklabels=False,
+    #     square=True,
+    #     vmin=0,
+    #     vmax=1
+    # )
+    # band_fig.show()
