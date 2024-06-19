@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.stats as stats
-
+from typing import Tuple, Union, List
 
 def __init_zero_matrices(number_of_matrices: int, dimension: int) -> np.array:
     total_number_of_entries = number_of_matrices * dimension * dimension
@@ -45,7 +45,7 @@ def add_noise(
 
 def add_blocks(
         matrix_array: np.ndarray,
-        block_starts: np.ndarray | None,
+        block_starts: Union[np.ndarray, None],
         density_array: np.ndarray,
         density_min: float,
         density_max: float,
@@ -56,7 +56,7 @@ def add_blocks(
         block_gap_chance: float,
         block_size_average: float,
         block_size_std_dev: float,
-) -> list[int]:
+) -> List[int]:
     # unpack and validate number of matrices and dimension
     number_of_matrices, dimension, dimension_check = matrix_array.shape
     if dimension_check != dimension:

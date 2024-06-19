@@ -1,5 +1,5 @@
 import numpy as np
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Union
 
 
 T = TypeVar('T')
