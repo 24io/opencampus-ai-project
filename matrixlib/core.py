@@ -6,39 +6,32 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 
 
+class ValueProperties:
+    blk_den_min: float
+    blk_den_max: float
+    blk_val_min: np.float32
+    blk_val_max: np.float32
+
+    def __init__(self, density_min: float, density_max: float, value_min: np.float32, value_max: np.float32):
+        self.blk_den_min = density_min
+        self.blk_den_max = density_max
+        self.blk_val_min = value_min
+        self.blk_val_max = value_max
+
+
 class BlockProperties:
     blk_len_avg: float
     blk_len_sdv: float
     blk_len_min: int
     blk_len_max: int
-    blk_den_min: float
-    blk_den_max: float
     blk_gap_chn: float
-    blk_val_min: np.float32
-    blk_val_max: np.float32
-    blk_start_v: np.ndarray
 
-    def __init__(
-        self,
-        size_average: float,
-        size_std_dev: float,
-        size_min: int,
-        size_max: int,
-        density_min: float,
-        density_max: float,
-        gap_chance: float,
-        value_min: np.float32,
-        value_max: np.float32,
-    ):
+    def __init__(self, size_average: float, size_std_dev: float, size_min: int, size_max: int, gap_chance: float):
         self.blk_len_avg = size_average
         self.blk_len_sdv = size_std_dev
         self.blk_len_min = size_min
         self.blk_len_max = size_max
-        self.blk_den_min = density_min
-        self.blk_den_max = density_max
         self.blk_gap_chn = gap_chance
-        self.blk_val_min = value_min
-        self.blk_val_max = value_max
 
 
 class MetaData:
