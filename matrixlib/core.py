@@ -1,6 +1,4 @@
 # encoding: utf-8
-import time
-from datetime import datetime
 
 import numpy as np
 import seaborn as sns
@@ -8,35 +6,70 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 
 
+class BlockProperties:
+    blk_len_avg: float
+    blk_len_sdv: float
+    blk_len_min: int
+    blk_len_max: int
+    blk_den_min: float
+    blk_den_max: float
+    blk_gap_chn: float
+    blk_val_min: np.float32
+    blk_val_max: np.float32
+    blk_start_v: np.ndarray
+
+    def __init__(
+        self,
+        size_average: float,
+        size_std_dev: float,
+        size_min: int,
+        size_max: int,
+        density_min: float,
+        density_max: float,
+        gap_chance: float,
+        value_min: np.float32,
+        value_max: np.float32,
+    ):
+        self.blk_len_avg = size_average
+        self.blk_len_sdv = size_std_dev
+        self.blk_len_min = size_min
+        self.blk_len_max = size_max
+        self.blk_den_min = density_min
+        self.blk_den_max = density_max
+        self.blk_gap_chn = gap_chance
+        self.blk_val_min = value_min
+        self.blk_val_max = value_max
+
+
+class MetaData:
+    """A data class containing the randomized values that were assigned to the corresponding matrix with the same
+    index.
+
+    **Note:** To keep variable names reasonably short the following abbreviations are used:
+        | ``bgr_...`` for background
+        | ``blk_...`` for blocks
+        | also note that ``tdata`` here refers to the `true` data values
+    """
+    bgr_noise_den: float = None
+    bgr_noise_min: float = None
+    bgr_noise_max: float = None
+    blk_noise_den: float = None
+    blk_noise_min: float = None
+    blk_noise_max: float = None
+    blk_tdata_den: float = None
+    blk_tdata_min: float = None
+    blk_tdata_max: float = None
+    det: float = None
+
+    def __init__(self):
+        pass
+
+
 class MatrixData:
-    __METADATA_FIELDS: int = 9  # change this when changing the MetaData class
-
-    class MetaData:
-        """A data class containing the randomized values that were assigned to the corresponding matrix with the same
-        index.
-
-        **Note:** To keep variable names reasonably short the following abbreviations are used:
-            | ``bgr_...`` for background
-            | ``blk_...`` for blocks
-            | also note that ``tdata`` here refers to the `true` data values
-        """
-        bgr_noise_den: float = None
-        bgr_noise_min: float = None
-        bgr_noise_max: float = None
-        blk_noise_den: float = None
-        blk_noise_min: float = None
-        blk_noise_max: float = None
-        blk_tdata_den: float = None
-        blk_tdata_min: float = None
-        blk_tdata_max: float = None
-
-        def __init__(self):
-            pass
-
     # provided input
-    sample_size: int
-    band_radius: int
-    dimension: int
+    len: int
+    band_rad: int
+    dim: int
     determinant_cutoff: float
     band_padding_value: np.float32
     # background parameters
@@ -104,9 +137,9 @@ class MatrixData:
             print_debug: bool = False,
             band_padding_value: np.float32 = np.NAN,
     ):
-        self.dimension = dimension
-        self.sample_size = sample_size
-        self.band_radius = band_radius
+        self.dim = dimension
+        self.len = sample_size
+        self.band_rad = band_radius
         # background noise parameters
         self.bgr_noise_den_min, self.bgr_noise_den_max = background_noise_density_range
         self.bgr_noise_val_min, self.bgr_noise_val_max = background_noise_value_range
@@ -136,9 +169,9 @@ class MatrixData:
         self.__narrow_to_band()
 
     def __init_data_size(self) -> None:
-        n: int = self.sample_size
-        dim: int = self.dimension
-        r: int = self.band_radius
+        n: int = self.len
+        dim: int = self.dim
+        r: int = self.band_rad
         w: int = 2 * r + 1  # the bands width is diagonal plus band radius in each direction
 
         self.matrices = np.zeros(shape=(n, dim, dim), dtype=np.float32)
@@ -146,9 +179,7 @@ class MatrixData:
         self.block_noise_start_labels = np.zeros(shape=(n, dim), dtype=np.int8)
         self.bands = np.zeros(shape=(n, w, dim), dtype=np.float32)
 
-        self.metadata = []
-        for i in range(n):
-            self.metadata.append(MatrixData.MetaData())
+        self.metadata = [MetaData() for _ in range(n)]
 
         if self.debug:
             bytes_per_mib = 1024 * 1024
@@ -170,7 +201,8 @@ class MatrixData:
         if self.debug:
             print("generating matrices...")
             print("    ...adding background noise")
-        self.__add_background_noise()
+        for n in range(self.len):
+            self.__add_background_noise(n)
         if self.debug:
             print("    ...adding noise blocks")
         self.block_noise_sizes = self.__add_blocks(generate_type="noise")
@@ -195,29 +227,22 @@ class MatrixData:
             plt.legend(loc='upper right')
             plt.show()
 
-    def __add_background_noise(self) -> None:
+    def __add_background_noise(self, i: int) -> None:
         # create some random noise values (some might be overridden later)
-        start: float = time.perf_counter()
-        print(f"timestamp: {start}")
-        for n in range(self.sample_size):
-            noise_density = np.random.uniform(self.bgr_noise_den_min, self.bgr_noise_den_max)
-            self.metadata[n].bgr_noise_den = noise_density  # store generated noise density in metadata field
+        noise_density = np.random.uniform(self.bgr_noise_den_min, self.bgr_noise_den_max)
+        self.metadata[i].bgr_noise_den = noise_density  # store generated noise density in metadata field
 
-            dim: int = self.dimension
-            low = self.bgr_noise_val_min
-            high = self.bgr_noise_val_max
-
-            # initialize truth-matrix (selector)
-            b_mat: np.ndarray = np.zeros((dim, dim), dtype=bool)
-            # populate lower triangular matrix selector
-            b_mat[np.tril_indices(dim)] = np.random.uniform(size=((dim * (dim + 1)) // 2)) < noise_density
-            # add values to matrix's lower triangular based on selector
-            self.matrices[n][b_mat] = np.random.uniform(low, high, size=b_mat.sum())
-            # copy lower triangular back onto upper triangular via transpose
-            self.matrices[n][np.triu_indices(dim)] = self.matrices[n].T[np.triu_indices(dim)]
-            # check if symmetrical
-            if self.debug:
-                print(f"[{n}] symmetric: {np.allclose(self.matrices[n], self.matrices[n].T, rtol=1e-05, atol=1e-08)}")
+        # initialize truth-matrix (selector)
+        sel: np.ndarray = np.zeros((self.dim, self.dim), dtype=bool)
+        # populate lower triangular matrix selector
+        size: int = ((self.dim * (self.dim + 1)) // 2)
+        sel[np.tril_indices(self.dim)] = np.random.uniform(size=size) < noise_density
+        # add values to matrix's lower triangular based on selector
+        self.matrices[i][sel] = np.random.uniform(self.bgr_noise_val_min, self.bgr_noise_val_max, size=sel.sum())
+        # copy lower triangular back onto upper triangular via transpose
+        self.matrices[i][np.triu_indices(self.dim)] = self.matrices[i].T[np.triu_indices(self.dim)]
+        # check if symmetrical
+        self.metadata[i].det = np.allclose(self.matrices[i], self.matrices[i].T, rtol=1e-05, atol=1e-08)
 
     def __add_blocks(self, generate_type: str) -> list[int]:
         if generate_type == "noise":
@@ -250,7 +275,7 @@ class MatrixData:
 
         # create blocks
         size_collector: list[int] = []
-        for index in range(self.sample_size):
+        for index in range(self.len):
             # generate density for current matrix and add to metadata
             block_density: float = np.random.uniform(density_min, density_max)
             if generate_true_data:
@@ -275,7 +300,7 @@ class MatrixData:
                 generated_counter += 1
 
         if self.debug:
-            invalid_matrices = generated_counter - self.sample_size
+            invalid_matrices = generated_counter - self.len
             print(f"Generated a total of {generated_counter} matrices since {invalid_matrices} were invalid.")
 
         return size_collector
@@ -294,7 +319,7 @@ class MatrixData:
         val_max: np.float32,
     ) -> bool:
         row_index = 0
-        while row_index < self.dimension - 1:
+        while row_index < self.dim - 1:
             block_starts[matrix_index][row_index] = 0  # initialize the value
             # add random gap depending on gap chance
             draw: float = np.random.uniform(0.0, 1.0)
@@ -306,12 +331,12 @@ class MatrixData:
                 current_block_size: int = int(size_generator.rvs())
 
                 # guard against leaving a single element (instead expand current_block_size)
-                if self.dimension - (current_block_size + row_index) < block_size_min:
-                    current_block_size = self.dimension - row_index - 1
+                if self.dim - (current_block_size + row_index) < block_size_min:
+                    current_block_size = self.dim - row_index - 1
 
                 # guard against overshooting the matrix size
-                if current_block_size + row_index >= self.dimension:
-                    current_block_size = self.dimension - row_index
+                if current_block_size + row_index >= self.dim:
+                    current_block_size = self.dim - row_index
                     if current_block_size < block_size_max:
                         raise ValueError("Clamped block size is too small")
 
@@ -337,14 +362,14 @@ class MatrixData:
         return matrix_invalid
 
     def __narrow_to_band(self) -> None:
-        for k in range(self.sample_size):
+        for k in range(self.len):
             # be wary of cache effects here!
-            for j in range(self.dimension):
-                self.bands[k][self.band_radius][j] = self.matrices[k][j][j]  # process the diagonal
-                for i in range(self.band_radius):
-                    o = i - self.band_radius
-                    u = 2 * self.band_radius - i
-                    if j > self.band_radius - i - 1:
+            for j in range(self.dim):
+                self.bands[k][self.band_rad][j] = self.matrices[k][j][j]  # process the diagonal
+                for i in range(self.band_rad):
+                    o = i - self.band_rad
+                    u = 2 * self.band_rad - i
+                    if j > self.band_rad - i - 1:
                         self.bands[k][i][j] = self.matrices[k][j][j + o]
                         self.bands[k][u][j] = self.matrices[k][j][j + o]
                     else:
@@ -358,7 +383,7 @@ if __name__ == "__main__":
     test_data = MatrixData(
         dimension=64,
         band_radius=10,
-        sample_size=10,
+        sample_size=1000,
         background_noise_density_range=(0.3, 0.5),
         background_noise_value_range=(0.0, 0.5),
         block_noise_density_range=(0.3, 0.5),
@@ -378,12 +403,13 @@ if __name__ == "__main__":
         print_debug=True
     )
 
-    for i in range(10):
+    for selected_index in range(4):
+        data_fig = plt.figure(num=selected_index, figsize=(14, 5))
+        data_fig.suptitle(f"test [{selected_index}] - {test_data.metadata[selected_index].bgr_noise_den}")
         # plot the matrix
-        data_fig = plt.figure(num=i, figsize=(6, 5))
-        data_fig.suptitle(f"test [{i}] - {test_data.metadata[i].bgr_noise_den}")
+        sp1 = data_fig.add_subplot(1, 2, 1)
         sns.heatmap(
-            test_data.matrices[i],
+            test_data.matrices[selected_index],
             cmap='rocket',
             cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
             xticklabels=False,
@@ -392,18 +418,17 @@ if __name__ == "__main__":
             vmin=0,
             vmax=1
         )
-        data_fig.show()
+        # plot the band
+        sp2 = data_fig.add_subplot(1, 2, 2)
+        sns.heatmap(
+            test_data.bands[0],
+            cmap='rocket',
+            cbar=False,
+            xticklabels=False,
+            yticklabels=False,
+            square=True,
+            vmin=0,
+            vmax=1
+        )
 
-    # # plot the band
-    # band_fig = plt.figure(num=2, figsize=(8, 2))
-    # sns.heatmap(
-    #     test_data.bands[0],
-    #     cmap='rocket',
-    #     cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
-    #     xticklabels=False,
-    #     yticklabels=False,
-    #     square=True,
-    #     vmin=0,
-    #     vmax=1
-    # )
-    # band_fig.show()
+        data_fig.show()
