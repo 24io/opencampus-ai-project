@@ -41,8 +41,18 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
     writer = tf.summary.create_file_writer(log_dir)
 
     # Define early stopping and model checkpoint
-    early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1, restore_best_weights=True)
-    checkpoint = ModelCheckpoint(filepath=os.path.join(log_dir, "best_model_checkpoint"), monitor='val_loss', save_best_only=True, save_weights_only=True, save_format='tf')
+    early_stopping = EarlyStopping(
+        monitor='val_loss',
+        patience=10,
+        verbose=1,
+        restore_best_weights=True
+    )
+    checkpoint = ModelCheckpoint(
+        filepath=os.path.join(log_dir, "model.{epoch:02d}-{val_loss:.4f}.weights.h5"),
+        monitor='val_loss',
+        save_best_only=True,
+        save_weights_only=True
+    )
 
     # Initialize lists to track losses
     train_losses = []
@@ -87,7 +97,7 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
             print("Early stopping triggered")
             break
 
-    model.save_weights(os.path.join(log_dir, "best_model_weights.tf"))
+    model.save_weights(os.path.join(log_dir, "best_model.weights.h5"))
 
     # Manually trigger on_train_end
     early_stopping.on_train_end()
@@ -169,3 +179,4 @@ def validate_one_epoch(model, val_dataset, loss_fn):
 
     epoch_val_loss /= len(val_dataset)
     return epoch_val_loss
+
