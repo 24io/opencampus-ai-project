@@ -92,10 +92,6 @@ class MatrixData:
     block_noise_start_labels: np.ndarray = None
     metadata: list[MetaData] = None
 
-    # statistics data
-    block_noise_sizes: list[int] = None
-    block_data_sizes: list[int] = None
-
     def __init__(
             self,
             dimension: int,
@@ -193,13 +189,13 @@ class MatrixData:
             print(f"determinants: [{abs_determinants.min()}, {abs_determinants.max()}]")
             # make a histogram for the block sizes
             plt.hist(
-                self.block_noise_sizes,
+                self.get_list_of_block_sizes(self.block_noise_start_labels),
                 bins=list(range(self.blk_noise_bp.len_min, self.blk_noise_bp.len_max + 1)),
                 alpha=0.5,
                 label='Noise'
             )
             plt.hist(
-                self.block_data_sizes,
+                self.get_list_of_block_sizes(self.block_data_start_labels),
                 bins=list(range(self.blk_tdata_bp.len_min, self.blk_tdata_bp.len_max + 1)),
                 alpha=0.5,
                 label='Data'
@@ -292,6 +288,28 @@ class MatrixData:
                         self.bands[k][u][j] = self.band_padding_value
         return
 
+    def get_list_of_block_sizes(self, block_index_array: np.ndarray) -> np.ndarray:
+        # based on https://stackoverflow.com/questions/24885092/finding-the-consecutive-zeros-in-a-numpy-array
+        block_index_flat_array: np.ndarray = block_index_array.reshape(self.len * self.dim)
+        # Create indicator array that is 1 where 'm' is 0 and 1 elsewhere. Pad ends with 0 for n-th diff step.
+        is_zero: np.ndarray = np.concatenate(([0], np.equal(block_index_flat_array, 0).view(np.int8), [0]))
+        # Calculate the n-th discrete difference (m[i+1] - m[i]) and gather in array.
+        abs_nth_discrete_diff: np.ndarray = np.abs(np.diff(is_zero))
+        # Get the start and end_plus_one of each series of zeroes in matrices. These are one off as '1' is block start.
+        block_start_and_end = np.where(abs_nth_discrete_diff == 1)[0].reshape(-1, 2)
+        block_lengths: np.ndarray = block_start_and_end[:, 1] - block_start_and_end[:, 0] + 1
+        block_length_entries: int = len(block_lengths)
+        # Count the numbers to get the total entries that are blocks of size greater one.
+        block_total: int = block_lengths.sum()
+        # Count the amount of -1 entries which tells us the number of gap entries.
+        gap_total: int = np.equal(block_index_flat_array, -1).sum()
+        # Subtract blocks and gaps to get the number of blocks of size equal to one.
+        one_blocks_total: int = self.len * self.dim - block_total - gap_total
+        # Initialize ones array which can be empty if no one-blocks were created (e.g. block size min > 1).
+        ones_lengths: np.ndarray = np.ones(one_blocks_total, dtype=block_lengths.dtype)
+
+        return np.concatenate((block_lengths, ones_lengths))
+            
 
 if __name__ == "__main__":
     bgr_noise_value_props = ValueProperties(density_range=(0.3, 0.5), value_range=(0.0, 0.5))
