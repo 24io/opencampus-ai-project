@@ -219,11 +219,11 @@ class MatrixData:
         self.matrices[i] = self.__generate_value_space(noise_density, self.bgr_noise_vp)
 
     def __add_noise_blocks(self, i: int, size_generator: stats.rv_continuous) -> None:
-        d: float = self.__add_block(i, size_generator, self.blk_noise_vp, self.blk_noise_bp, self.tdata_blk_starts)
+        d: float = self.__add_block(i, size_generator, self.blk_noise_vp, self.blk_noise_bp, self.noise_blk_starts)
         self.metadata[i].blk_noise_den = d
 
     def __add_tdata_blocks(self, i: int, size_generator: stats.rv_continuous) -> None:
-        d: float = self.__add_block(i, size_generator, self.blk_tdata_vp, self.blk_tdata_bp, self.noise_blk_starts)
+        d: float = self.__add_block(i, size_generator, self.blk_tdata_vp, self.blk_tdata_bp, self.tdata_blk_starts)
         self.metadata[i].blk_tdata_den = d
 
     def __add_block(
