@@ -25,6 +25,10 @@ class BlockProperties:
     gap_chn: float
 
     def __init__(self, size_range: tuple[int, int], size_average: float, size_std_dev: float, gap_chance: float):
+        if not size_range[0] > 0:
+            raise ValueError('size_range lower bound must be greater than zero')
+        if not size_range[0] < size_range[1]:
+            raise ValueError('lower bounds must be smaller than uppers bound')
         self.len_min, self.len_max = size_range
         self.len_avg = size_average
         self.len_sdv = size_std_dev
