@@ -127,16 +127,11 @@ class MatrixData:
 
         # initialize data arrays and generate matrix data
         start: float = time.time()
-        if self.debug:
-            print(f"start generating matrix data at {start}")
-            print("-" * 80)
         self.__init_data_size()
         self.__generate_matrices()
         self.__narrow_to_band()
         end: float = time.time()
         if self.debug:
-            print("-" * 80)
-            print(f"finished generating matrix data at {end}")
             print(f"duration: {end - start:0.2f} seconds")
 
     def __init_data_size(self) -> None:
@@ -190,15 +185,14 @@ class MatrixData:
                 self.metadata[i].det = det
                 if not matrix_valid:
                     if self.debug:
-                        print(f"    matrix at [{i}] is invalid (det = {det}) -> re-generating.")
+                        print(f"matrix at [{i}] is invalid (det = {det}) -> re-generating.")
                     invalid_counter += 1
 
         if self.debug:
             # print info on re-rolled matrices
-            print(f"")
-            print(f"    invalid matrices: {invalid_counter}")
+            print(f"invalid matrices: {invalid_counter}")
             abs_determinants: np.ndarray = np.asarray([abs(self.metadata[i].det) for i in range(self.len)])
-            print(f"    determinant abs-value range: [{abs_determinants.min()}, {abs_determinants.max()}]")
+            print(f"determinant abs-value range: [{abs_determinants.min()}, {abs_determinants.max()}]")
 
             # make a histogram for the block sizes
             pyplot.hist(
