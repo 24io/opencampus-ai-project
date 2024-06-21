@@ -311,7 +311,6 @@ class MatrixData:
         # Get the start and end_plus_one of each series of zeroes in matrices. These are one off as '1' is block start.
         block_start_and_end = np.where(abs_nth_discrete_diff == 1)[0].reshape(-1, 2)
         block_lengths: np.ndarray = block_start_and_end[:, 1] - block_start_and_end[:, 0] + 1
-        block_length_entries: int = len(block_lengths)
         # Count the numbers to get the total entries that are blocks of size greater one.
         block_total: int = block_lengths.sum()
         # Count the amount of -1 entries which tells us the number of gap entries.
