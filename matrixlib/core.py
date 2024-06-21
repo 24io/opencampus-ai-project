@@ -219,23 +219,18 @@ class MatrixData:
     def __add_background_noise(self, i: int) -> None:
         # create some random noise values (some might be overridden later)
         noise_density = np.random.uniform(self.bgr_noise_vp.den_min, self.bgr_noise_vp.den_max)
-        self.metadata[i].bgr_noise_den = noise_density  # store generated noise density in metadata field
+        # store generated noise density in metadata field
+        self.metadata[i].bgr_noise_den = noise_density
+        # generate data and write to matrix
+        self.matrices[i] = self.__generate_value_space(noise_density, self.bgr_noise_vp)
 
-        # initialize truth-matrix (selector)
-        sel: np.ndarray = np.zeros((self.dim, self.dim), dtype=bool)
-        # populate lower triangular matrix selector
-        size: int = ((self.dim * (self.dim + 1)) // 2)
-        sel[np.tril_indices(self.dim)] = np.random.uniform(size=size) < noise_density
-        # add values to matrix's lower triangular based on selector
-        self.matrices[i][sel] = np.random.uniform(self.bgr_noise_vp.val_min, self.bgr_noise_vp.val_max, size=sel.sum())
-        # copy lower triangular back onto upper triangular via transpose
-        self.matrices[i][np.triu_indices(self.dim)] = self.matrices[i].T[np.triu_indices(self.dim)]
+    def __add_noise_blocks(self, i: int, size_generator: stats.rv_continuous) -> None:
+        d: float = self.__add_block(i, size_generator, self.blk_noise_vp, self.blk_noise_bp, self.tdata_blk_starts)
+        self.metadata[i].blk_noise_den = d
 
-    def __add_noise_blocks(self, index: int, size_generator: stats.rv_continuous) -> None:
-        self.__add_block(index, size_generator, self.blk_noise_vp, self.blk_noise_bp, self.block_noise_start_labels)
-
-    def __add_tdata_blocks(self, index: int, size_generator: stats.rv_continuous) -> None:
-        self.__add_block(index, size_generator, self.blk_tdata_vp, self.blk_tdata_bp, self.block_data_start_labels)
+    def __add_tdata_blocks(self, i: int, size_generator: stats.rv_continuous) -> None:
+        d: float = self.__add_block(i, size_generator, self.blk_tdata_vp, self.blk_tdata_bp, self.noise_blk_starts)
+        self.metadata[i].blk_tdata_den = d
 
     def __add_block(
         self,
@@ -244,7 +239,7 @@ class MatrixData:
         value_properties: ValueProperties,
         block_properties: BlockProperties,
         start_vec: np.ndarray,
-    ) -> None:
+    ) -> float:
         block_density: float = np.random.uniform(value_properties.den_min, value_properties.den_max)
         row_index = 0
         while row_index < self.dim - 1:
@@ -282,7 +277,21 @@ class MatrixData:
                             self.matrices[mat_index][b][a] = np.float32(value)
                 row_index += current_block_size
 
-        return
+        return block_density
+
+    def __generate_value_space(self, density: float, vp: ValueProperties):
+        # initialize data-matrix (values)
+        data: np.ndarray = np.zeros((self.dim, self.dim), dtype=np.float32)
+        # initialize truth-matrix (selector)
+        sel: np.ndarray = np.zeros((self.dim, self.dim), dtype=bool)
+        # populate lower triangular matrix selector
+        sel[np.tril_indices(self.dim)] = np.random.uniform(size=((self.dim * (self.dim + 1)) // 2)) < density
+        # add values to matrix's lower triangular based on selector
+        data[sel] = np.random.uniform(vp.val_min, vp.val_max, size=sel.sum())
+        # copy lower triangular back onto upper triangular via transpose
+        data[np.triu_indices(self.dim)] = data.T[np.triu_indices(self.dim)]
+
+        return data
 
     def __narrow_to_band(self) -> None:
         for k in range(self.len):
