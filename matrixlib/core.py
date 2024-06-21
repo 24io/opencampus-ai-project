@@ -1,9 +1,10 @@
 # encoding: utf-8
-
+import time
 import numpy as np
 import seaborn as sns
-import scipy.stats as stats
-import matplotlib.pyplot as plt
+
+from scipy import stats
+from matplotlib import pyplot
 
 
 class ValueProperties:
@@ -125,9 +126,18 @@ class MatrixData:
         self.debug = print_debug
 
         # initialize data arrays and generate matrix data
+        start: float = time.time()
+        if self.debug:
+            print(f"start generating matrix data at {start}")
+            print("-" * 80)
         self.__init_data_size()
         self.__generate_matrices()
         self.__narrow_to_band()
+        end: float = time.time()
+        if self.debug:
+            print("-" * 80)
+            print(f"finished generating matrix data at {end}")
+            print(f"duration: {end - start:0.2f} seconds")
 
     def __init_data_size(self) -> None:
         n: int = self.len
@@ -152,6 +162,7 @@ class MatrixData:
                   f"with a memory usage of {self.block_noise_start_labels.nbytes / bytes_per_mib:7.3f} MiB")
             print(f"initialized        band vectors of size {n:6d} x {dim:3d} x {r:3d} = {n * dim * r:9d} " +
                   f"with a memory usage of {self.bands.nbytes / bytes_per_mib:7.3f} MiB")
+            print("-" * 80)
 
         return
 
@@ -179,29 +190,31 @@ class MatrixData:
                 self.metadata[i].det = det
                 if not matrix_valid:
                     if self.debug:
-                        print(f"matrix at [{i}] is invalid (det = {det}) -> re-generating.")
+                        print(f"    matrix at [{i}] is invalid (det = {det}) -> re-generating.")
                     invalid_counter += 1
 
         if self.debug:
             # print info on re-rolled matrices
-            print(f"invalid matrices: {invalid_counter}")
+            print(f"")
+            print(f"    invalid matrices: {invalid_counter}")
             abs_determinants: np.ndarray = np.asarray([abs(self.metadata[i].det) for i in range(self.len)])
-            print(f"determinants: [{abs_determinants.min()}, {abs_determinants.max()}]")
+            print(f"    determinant abs-value range: [{abs_determinants.min()}, {abs_determinants.max()}]")
+
             # make a histogram for the block sizes
-            plt.hist(
+            pyplot.hist(
                 self.get_list_of_block_sizes(self.block_noise_start_labels),
                 bins=list(range(self.blk_noise_bp.len_min, self.blk_noise_bp.len_max + 1)),
                 alpha=0.5,
                 label='Noise'
             )
-            plt.hist(
+            pyplot.hist(
                 self.get_list_of_block_sizes(self.block_data_start_labels),
                 bins=list(range(self.blk_tdata_bp.len_min, self.blk_tdata_bp.len_max + 1)),
                 alpha=0.5,
                 label='Data'
             )
-            plt.legend(loc='upper right')
-            plt.show()
+            pyplot.legend(loc='upper right')
+            pyplot.show()
 
     def __add_background_noise(self, i: int) -> None:
         # create some random noise values (some might be overridden later)
@@ -333,7 +346,7 @@ if __name__ == "__main__":
     )
 
     for selected_index in range(4):
-        data_fig = plt.figure(num=selected_index, figsize=(14, 5))
+        data_fig = pyplot.figure(num=selected_index, figsize=(14, 5))
         data_fig.suptitle(f"test [{selected_index}] - {test_data.metadata[selected_index].bgr_noise_den}")
         # plot the matrix
         sp1 = data_fig.add_subplot(1, 2, 1)
