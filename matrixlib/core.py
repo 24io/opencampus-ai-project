@@ -89,8 +89,8 @@ class MatrixData:
     # generated output
     matrices: np.ndarray = None
     bands: np.ndarray = None
-    block_data_start_labels: np.ndarray = None
-    block_noise_start_labels: np.ndarray = None
+    noise_blk_starts: np.ndarray = None
+    tdata_blk_starts: np.ndarray = None
     metadata: list[MetaData] = None
 
     def __init__(
@@ -146,8 +146,8 @@ class MatrixData:
         w: int = 2 * r + 1  # the bands width is diagonal plus band radius in each direction
 
         self.matrices = np.zeros(shape=(n, dim, dim), dtype=np.float32)
-        self.block_data_start_labels = np.zeros(shape=(n, dim), dtype=np.int8)
-        self.block_noise_start_labels = np.zeros(shape=(n, dim), dtype=np.int8)
+        self.noise_blk_starts = np.zeros(shape=(n, dim), dtype=np.int8)
+        self.tdata_blk_starts = np.zeros(shape=(n, dim), dtype=np.int8)
         self.bands = np.zeros(shape=(n, w, dim), dtype=np.float32)
 
         self.metadata = [MetaData() for _ in range(n)]
@@ -157,9 +157,9 @@ class MatrixData:
             print(f"initialized        data vectors of size {n:6d} x {dim:3d} x {dim:3d} = {n * dim * dim:9d} " +
                   f"with a memory usage of {self.matrices.nbytes / bytes_per_mib:7.3f} MiB")
             print(f"initialized  data start vectors of size {n:6d} x {dim:3d}       = {n*dim:9d} " +
-                  f"with a memory usage of {self.block_data_start_labels.nbytes / bytes_per_mib:7.3f} MiB")
+                  f"with a memory usage of {self.noise_blk_starts.nbytes / bytes_per_mib:7.3f} MiB")
             print(f"initialized noise start vectors of size {n:6d} x {dim:3d}       = {n * dim:9d} " +
-                  f"with a memory usage of {self.block_noise_start_labels.nbytes / bytes_per_mib:7.3f} MiB")
+                  f"with a memory usage of {self.tdata_blk_starts.nbytes / bytes_per_mib:7.3f} MiB")
             print(f"initialized        band vectors of size {n:6d} x {dim:3d} x {r:3d} = {n * dim * r:9d} " +
                   f"with a memory usage of {self.bands.nbytes / bytes_per_mib:7.3f} MiB")
             print("-" * 80)
@@ -202,13 +202,13 @@ class MatrixData:
 
             # make a histogram for the block sizes
             pyplot.hist(
-                self.get_list_of_block_sizes(self.block_noise_start_labels),
+                self.get_list_of_block_sizes(self.tdata_blk_starts),
                 bins=list(range(self.blk_noise_bp.len_min, self.blk_noise_bp.len_max + 1)),
                 alpha=0.5,
                 label='Noise'
             )
             pyplot.hist(
-                self.get_list_of_block_sizes(self.block_data_start_labels),
+                self.get_list_of_block_sizes(self.noise_blk_starts),
                 bins=list(range(self.blk_tdata_bp.len_min, self.blk_tdata_bp.len_max + 1)),
                 alpha=0.5,
                 label='Data'
