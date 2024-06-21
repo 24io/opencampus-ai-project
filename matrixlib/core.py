@@ -105,7 +105,7 @@ class MatrixData:
             seed: int = None,
             determinant_cutoff: float = 0.0,
             print_debug: bool = False,
-            band_padding_value: np.float32 = np.NAN,
+            band_padding_value: np.float32 = 0.0,
     ):
         self.dim = dimension
         self.len = sample_size
