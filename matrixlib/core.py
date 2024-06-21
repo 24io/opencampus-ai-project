@@ -30,6 +30,13 @@ class BlockProperties:
         self.len_sdv = size_std_dev
         self.gap_chn = gap_chance
 
+    def get_size_generator(self) -> stats.rv_continuous:
+        # create block size generator for truncated bell curve
+        scale: int = int(self.len_avg * self.len_sdv)
+        lower_bound_offset: float = (self.len_min - self.len_avg) / scale
+        upper_bound_offset: float = (self.len_max - self.len_avg) / scale
+        return stats.truncnorm(a=lower_bound_offset, b=upper_bound_offset, loc=self.len_avg, scale=scale)
+
 
 class MetaData:
     """A data class containing the randomized values that were assigned to the corresponding matrix with the same
@@ -153,18 +160,33 @@ class MatrixData:
             np.random.seed(self.seed)
 
         if self.debug:
-            print("generating matrices...")
-            print("    ...adding background noise")
-        for n in range(self.len):
-            self.__add_background_noise(n)
-        if self.debug:
-            print("    ...adding noise blocks")
-        self.block_noise_sizes = self.__add_blocks(generate_type="noise")
-        if self.debug:
-            print("    ...adding data blocks")
-        self.block_data_sizes = self.__add_blocks(generate_type="data")
+            print("instantiation rng generators...")
+        noise_blk_size_gen: stats.rv_continuous = self.blk_noise_bp.get_size_generator()
+        tdata_blk_size_gen: stats.rv_continuous = self.blk_tdata_bp.get_size_generator()
 
         if self.debug:
+            print("generating matrices...")
+        invalid_counter: int = 0  # counter to geet number of "re-rolls"
+        for i in range(self.len):
+            matrix_valid: bool = False
+            while not matrix_valid:
+                self.__add_background_noise(i)
+                self.__add_noise_blocks(i, noise_blk_size_gen)
+                self.__add_tdata_blocks(i, tdata_blk_size_gen)
+                # check if "invertible enough"
+                det: float = np.linalg.det(self.matrices[i])
+                matrix_valid = abs(det) > self.determinant_cutoff
+                self.metadata[i].det = det
+                if not matrix_valid:
+                    if self.debug:
+                        print(f"matrix at [{i}] is invalid (det = {det}) -> re-generating.")
+                    invalid_counter += 1
+
+        if self.debug:
+            # print info on re-rolled matrices
+            print(f"invalid matrices: {invalid_counter}")
+            abs_determinants: np.ndarray = np.asarray([abs(self.metadata[i].det) for i in range(self.len)])
+            print(f"determinants: [{abs_determinants.min()}, {abs_determinants.max()}]")
             # make a histogram for the block sizes
             plt.hist(
                 self.block_noise_sizes,
@@ -195,81 +217,32 @@ class MatrixData:
         self.matrices[i][sel] = np.random.uniform(self.bgr_noise_vp.val_min, self.bgr_noise_vp.val_max, size=sel.sum())
         # copy lower triangular back onto upper triangular via transpose
         self.matrices[i][np.triu_indices(self.dim)] = self.matrices[i].T[np.triu_indices(self.dim)]
-        # check if symmetrical
-        self.metadata[i].det = np.allclose(self.matrices[i], self.matrices[i].T, rtol=1e-05, atol=1e-08)
 
-    def __add_blocks(self, generate_type: str) -> list[int]:
-        if generate_type == "noise":
-            value_properties: ValueProperties = self.blk_noise_vp
-            block_properties: BlockProperties = self.blk_noise_bp
-            start_vec: np.ndarray = self.block_noise_start_labels
-            generate_true_data: bool = False
-        elif generate_type == "data":
-            value_properties: ValueProperties = self.blk_tdata_vp
-            block_properties: BlockProperties = self.blk_tdata_bp
-            start_vec: np.ndarray = self.block_data_start_labels
-            generate_true_data: bool = True
-        else:
-            raise ValueError(f"generate_type {generate_type} not supported")
+    def __add_noise_blocks(self, index: int, size_generator: stats.rv_continuous) -> None:
+        self.__add_block(index, size_generator, self.blk_noise_vp, self.blk_noise_bp, self.block_noise_start_labels)
 
-        # create block size generator for truncated bell curve
-        scale: int = int(block_properties.len_avg * block_properties.len_sdv)
-        lbo: float = (block_properties.len_min - block_properties.len_avg) / scale  # lower bound offset
-        ubo: float = (block_properties.len_max - block_properties.len_avg) / scale  # upper bound offset
-        size_generator: stats.rv_continuous = stats.truncnorm(a=lbo, b=ubo, loc=block_properties.len_avg, scale=scale)
+    def __add_tdata_blocks(self, index: int, size_generator: stats.rv_continuous) -> None:
+        self.__add_block(index, size_generator, self.blk_tdata_vp, self.blk_tdata_bp, self.block_data_start_labels)
 
-        # debug counter
-        generated_counter: int = 0
-
-        # create blocks
-        size_collector: list[int] = []
-        for index in range(self.len):
-            # generate density for current matrix and add to metadata
-            block_density: float = np.random.uniform(value_properties.den_min, value_properties.den_max)
-            if generate_true_data:
-                self.metadata[index].blk_tdata_den = block_density
-            else:
-                self.metadata[index].blk_noise_den = block_density
-
-            matrix_invalid: bool = True
-            while matrix_invalid:
-                matrix_invalid = self.__generate_single_matrix(
-                    index,
-                    size_collector,
-                    size_generator,
-                    value_properties,
-                    block_properties,
-                    start_vec,
-                    block_density
-                )
-                generated_counter += 1
-
-        if self.debug:
-            invalid_matrices = generated_counter - self.len
-            print(f"Generated a total of {generated_counter} matrices since {invalid_matrices} were invalid.")
-
-        return size_collector
-
-    def __generate_single_matrix(
+    def __add_block(
         self,
-        matrix_index: int,
-        size_collector: list[int],
-        size_generator: stats.truncnorm,
+        mat_index: int,
+        size_generator: stats.rv_continuous,
         value_properties: ValueProperties,
         block_properties: BlockProperties,
         start_vec: np.ndarray,
-        block_density: float,
-    ) -> bool:
+    ) -> None:
+        block_density: float = np.random.uniform(value_properties.den_min, value_properties.den_max)
         row_index = 0
         while row_index < self.dim - 1:
-            start_vec[matrix_index][row_index] = 0  # initialize the value
+            start_vec[mat_index][row_index] = 0  # initialize the value
             # add random gap depending on gap chance
             draw: float = np.random.uniform(0.0, 1.0)
-            if draw < block_properties.gap_chn:
-                start_vec[matrix_index][row_index] = -1  # denote end of block if gaps are allowed
+            if draw < block_properties.gap_chn and row_index < self.dim - 1 - block_properties.len_min:
+                start_vec[mat_index][row_index] = -1  # denote that index is a gap spot
                 row_index += 1
             else:
-                start_vec[matrix_index][row_index] = 1
+                start_vec[mat_index][row_index] = 1
                 current_block_size: int = int(size_generator.rvs())
 
                 # guard against leaving a single element (instead expand current_block_size)
@@ -287,22 +260,16 @@ class MatrixData:
                     # set diagonal to value
                     if np.random.random() < block_density:
                         value: float = np.random.uniform(value_properties.val_min, value_properties.val_max)
-                        self.matrices[matrix_index][a][a] = np.float32(value)
+                        self.matrices[mat_index][a][a] = np.float32(value)
                     for i in range(j):
                         b = i + row_index
                         if np.random.random() < block_density:
                             value: float = np.random.uniform(value_properties.val_min, value_properties.val_max)
-                            self.matrices[matrix_index][a][b] = np.float32(value)
-                            self.matrices[matrix_index][b][a] = np.float32(value)
+                            self.matrices[mat_index][a][b] = np.float32(value)
+                            self.matrices[mat_index][b][a] = np.float32(value)
                 row_index += current_block_size
-                # collect size for histogram creation
-                size_collector.append(current_block_size)
 
-        det: float = np.linalg.det(self.matrices[matrix_index])
-        matrix_invalid: bool = abs(det) < self.determinant_cutoff
-        if matrix_invalid and self.debug:
-            print(f"determinant {det} of [{matrix_index}] is below cutoff threshold, recalculating.")
-        return matrix_invalid
+        return
 
     def __narrow_to_band(self) -> None:
         for k in range(self.len):
