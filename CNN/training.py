@@ -1,6 +1,3 @@
-import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-import os
 import os
 
 import tensorflow as tf
@@ -104,8 +101,8 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
     checkpoint.on_train_end()
 
     # Log model weights after training
-    print("Model weights after training:")
-    print(model.get_weights())
+    # print("Model weights after training:")
+    # print(model.get_weights())
 
     return model, train_losses, val_losses
 
