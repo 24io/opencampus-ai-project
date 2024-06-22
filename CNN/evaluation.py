@@ -1,5 +1,4 @@
 import numpy as np
-import tensorflow as tf
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 
@@ -38,8 +37,8 @@ def evaluate_model(model, test_dataset, loss_fn):
     # Flatten the arrays for metric calculations
     true_labels_flat = true_labels.flatten()
     predicted_labels_flat = predicted_labels.flatten()
-    
-    # Log shapes of true and predicted labels
+
+    # Print shapes of true and predicted labels
     print(f"True Labels Shape: {true_labels_flat.shape}")
     print(f"Predicted Labels Shape: {predicted_labels_flat.shape}")
 
