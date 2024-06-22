@@ -1,34 +1,7 @@
 import numpy as np
 import scipy
-from scipy.sparse.linalg import gmres, LinearOperator
+from scipy.sparse.linalg import gmres
 
-
-# def ensure_nonsingularity(A: np.ndarray, band_width: int = 10) -> np.ndarray:
-#     """
-#     Modifies the input matrices to ensure non-singularity by replacing all nonzero entries
-#     with values in the range (-1, 0) and setting all diagonal band values to 1.0.
-#
-#     Args:
-#         A: NumPy array of shape (n, m, m) representing n square matrices of size m x m.
-#         band_width: Width of the diagonal band to set to 1.0 (default is 1, which is just the main diagonal)
-#
-#     Returns:
-#         Modified NumPy array.
-#     """
-#     A_mod = np.copy(A)
-#     n, m, _ = A.shape
-#
-#     for k in range(n):
-#         # Replace nonzero off-diagonal elements with uniform random values in (-1, 0)
-#         mask = (A_mod[k] != 0) & ~np.eye(m, dtype=bool)
-#         A_mod[k][mask] = np.random.uniform(-1, 0, size=np.sum(mask))
-#
-#         # Set diagonal band to 1.0
-#         for i in range(m):
-#             for j in range(max(0, i-band_width+1), min(m, i+band_width)):
-#                 A_mod[k, i, j] = 1.0
-#
-#     return A_mod
 
 def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
                                                  prediction_indicator_array: np.ndarray) -> np.ndarray:
@@ -66,7 +39,12 @@ def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
             start = block_starts[i]
             end = block_starts[i + 1]
             block = input_matrix[k, start:end, start:end]
-            prec[k, start:end, start:end] = scipy.linalg.inv(block)  # Invert each block
+
+            try:
+                prec[k, start:end, start:end] = scipy.linalg.inv(block)  # Invert each block
+            except np.linalg.LinAlgError:  # pseudo
+                print(f"Matrix is singular, using pseudo-inverse for block {k} at indices {start}:{end}")
+                prec[k, start:end, start:end] = scipy.linalg.pinv(block)
 
         # Normalise nonzero elements to range (-1, 0)
         val_min, val_max = prec[k].min(), prec[k].max()
@@ -76,31 +54,37 @@ def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
     return prec
 
 
-def prepare_matrix(A: np.ndarray) -> np.ndarray:
+def prepare_matrix(A: np.ndarray, method: str = 'flip') -> np.ndarray:
     """
     Modifies the input matrix to ensure non-singularity by replacing all nonzero entries with values in the range (-1, 0) and setting all diagonal values to 1.0.
 
     Args:
     :param A: NumPy array of shape (n, m, m) representing n square matrices of size m x m.
+    :param method: String, either 'flip' or 'minmax'. Default is 'flip'.
     :return: NumPy array of shape (n, m, m) with modified values.
     """
     A_prep = A.copy()
 
-    # # Identify nonzero elements using boolean mask
-    # nonzero_mask = A_prep != 0
-    #
-    # # Normalise nonzero elements to range (-1, 0)
-    # nonzero_vals = A_prep[nonzero_mask]
-    # min_val, max_val = nonzero_vals.min(), nonzero_vals.max()
-    # A_prep[nonzero_mask] = -1 + (nonzero_vals - min_val) / (max_val - min_val)
+    if method == 'minmax':
+        # Identify nonzero elements using boolean mask
+        nonzero_mask = A_prep != 0
 
-    # flip values from [0, 1]  to [-1, 0]
-    A_prep -= 1
+        # Normalise nonzero elements to range (-1, 0)
+        nonzero_vals = A_prep[nonzero_mask]
+        min_val, max_val = nonzero_vals.min(), nonzero_vals.max()
+        A_prep[nonzero_mask] = -1 + (nonzero_vals - min_val) / (max_val - min_val)
+
+    elif method == 'flip':
+        # flip values from [0, 1] to [-1, 0]
+        A_prep -= 1
+    else:
+        raise ValueError("Method must be either 'flip' or 'minmax'")
 
     # Set diagonal to 1.0
     np.fill_diagonal(A_prep, 1.0)
 
     return A_prep
+
 
 
 def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = None, rtol: float = 1e-3) -> tuple[
