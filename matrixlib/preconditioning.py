@@ -68,16 +68,40 @@ def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
             block = input_matrix[k, start:end, start:end]
             prec[k, start:end, start:end] = scipy.linalg.inv(block)  # Invert each block
 
-        # min max normalisation
+        # Normalise nonzero elements to range (-1, 0)
         val_min, val_max = prec[k].min(), prec[k].max()
-        prec[k] = (prec[k] - val_min) / (val_max - val_min) * -1
+        prec[k] = -1 + (prec[k] - val_min) / (val_max - val_min)
         prec[k][np.diag_indices(m)] = 1.0
 
     return prec
 
 
-def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = None, maxiter: int = 1000,
-                               rtol: float = 1e-3) -> tuple[np.ndarray, np.ndarray, np.ndarray, list]:
+def prepare_matrix(A: np.ndarray) -> np.ndarray:
+    """
+    Modifies the input matrix to ensure non-singularity by replacing all nonzero entries with values in the range (-1, 0) and setting all diagonal values to 1.0.
+
+    Args:
+    :param A: NumPy array of shape (n, m, m) representing n square matrices of size m x m.
+    :return: NumPy array of shape (n, m, m) with modified values.
+    """
+    A_prep = A.copy()
+
+    # Identify nonzero elements using boolean mask
+    nonzero_mask = A_prep != 0
+
+    # Normalise nonzero elements to range (-1, 0)
+    nonzero_vals = A_prep[nonzero_mask]
+    min_val, max_val = nonzero_vals.min(), nonzero_vals.max()
+    A_prep[nonzero_mask] = -1 + (nonzero_vals - min_val) / (max_val - min_val)
+
+    # Set diagonal to 1.0
+    np.fill_diagonal(A_prep, 1.0)
+
+    return A_prep
+
+
+def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = None, rtol: float = 1e-3) -> tuple[
+    np.ndarray, np.ndarray, np.ndarray, list]:
     """
         Solve a system of linear equations using GMRES with optional preconditioning and monitoring.
 
@@ -119,10 +143,10 @@ def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = Non
 
         if M is not None:
             M_op = LinearOperator(matvec=lambda x: M[k] @ x, shape=(m, m))  # Apply preconditioner by multiplication
-            x, info = gmres(A[k], b[k], x0=np.zeros_like(b[k]), M=M_op, maxiter=maxiter, rtol=rtol, callback=callback,
+            x, info = gmres(A[k], b[k], x0=np.zeros_like(b[k]), M=M_op, rtol=rtol, callback=callback,
                             callback_type='pr_norm')
         else:
-            x, info = gmres(A[k], b[k], x0=np.zeros_like(b[k]), maxiter=maxiter, rtol=rtol, callback=callback,
+            x, info = gmres(A[k], b[k], x0=np.zeros_like(b[k]), rtol=rtol, callback=callback,
                             callback_type='pr_norm')
 
         x_solutions[k] = x
