@@ -69,9 +69,9 @@ def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
             prec[k, start:end, start:end] = scipy.linalg.inv(block)  # Invert each block
 
         # Normalise nonzero elements to range (-1, 0)
-        val_min, val_max = prec[k].min(), prec[k].max()
-        prec[k] = -1 + (prec[k] - val_min) / (val_max - val_min)
-        prec[k][np.diag_indices(m)] = 1.0
+        # val_min, val_max = prec[k].min(), prec[k].max()
+        # prec[k] = -1 + (prec[k] - val_min) / (val_max - val_min)
+        # prec[k][np.diag_indices(m)] = 1.0
 
     return prec
 
