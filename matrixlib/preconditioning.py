@@ -69,9 +69,9 @@ def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
             prec[k, start:end, start:end] = scipy.linalg.inv(block)  # Invert each block
 
         # Normalise nonzero elements to range (-1, 0)
-        # val_min, val_max = prec[k].min(), prec[k].max()
-        # prec[k] = -1 + (prec[k] - val_min) / (val_max - val_min)
-        # prec[k][np.diag_indices(m)] = 1.0
+        val_min, val_max = prec[k].min(), prec[k].max()
+        prec[k] = -1 + (prec[k] - val_min) / (val_max - val_min)
+        prec[k][np.diag_indices(m)] = 1.0
 
     return prec
 
@@ -86,13 +86,16 @@ def prepare_matrix(A: np.ndarray) -> np.ndarray:
     """
     A_prep = A.copy()
 
-    # Identify nonzero elements using boolean mask
-    nonzero_mask = A_prep != 0
+    # # Identify nonzero elements using boolean mask
+    # nonzero_mask = A_prep != 0
+    #
+    # # Normalise nonzero elements to range (-1, 0)
+    # nonzero_vals = A_prep[nonzero_mask]
+    # min_val, max_val = nonzero_vals.min(), nonzero_vals.max()
+    # A_prep[nonzero_mask] = -1 + (nonzero_vals - min_val) / (max_val - min_val)
 
-    # Normalise nonzero elements to range (-1, 0)
-    nonzero_vals = A_prep[nonzero_mask]
-    min_val, max_val = nonzero_vals.min(), nonzero_vals.max()
-    A_prep[nonzero_mask] = -1 + (nonzero_vals - min_val) / (max_val - min_val)
+    # flip values from [0, 1]  to [-1, 0]
+    A_prep -= 1
 
     # Set diagonal to 1.0
     np.fill_diagonal(A_prep, 1.0)
@@ -133,17 +136,17 @@ def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = Non
     iteration_counts = np.zeros(n, dtype=int)
     all_residuals = []
 
+    def callback(rk, xk=None, sk=None):
+        iteration_count[0] += 1
+        residuals.append(rk)
+
     for k in range(n):
         iteration_count = [0]
         residuals = []
 
-        def callback(rk, xk=None, sk=None):
-            iteration_count[0] += 1
-            residuals.append(rk)
-
         if M is not None:
-            M_op = LinearOperator(matvec=lambda x: M[k] @ x, shape=(m, m))  # Apply preconditioner by multiplication
-            x, info = gmres(A[k], b[k], x0=np.zeros_like(b[k]), M=M_op, rtol=rtol, callback=callback,
+            # M_op = LinearOperator(matvec=lambda x: M[k] @ x, shape=(m, m))  # Apply preconditioner by multiplication
+            x, info = gmres(A[k], b[k], x0=np.zeros_like(b[k]), M=M[k], rtol=rtol, callback=callback,
                             callback_type='pr_norm')
         else:
             x, info = gmres(A[k], b[k], x0=np.zeros_like(b[k]), rtol=rtol, callback=callback,
@@ -154,9 +157,10 @@ def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = Non
         iteration_counts[k] = iteration_count[0]
         all_residuals.append(residuals)
 
-        # Print summary statistics
-        print(f"{'With preconditioner:' if M is not None else 'Without preconditioner:'}")
-        print(f"  Converged: {np.sum(info_array == 0)} out of {len(info_array)}")
-        print(f"  Average iterations: {np.mean(iteration_counts):.2f}")
+    # Print summary statistics
+    print(f"{'With preconditioner:' if M is not None else 'Without preconditioner:'}")
+    print(f"  Converged: {np.sum(info_array == 0)} out of {len(info_array)}")
+    print(f"  Average iterations: {np.mean(iteration_counts):.2f}")
+    print(f"  iterations: {iteration_counts}")
 
-        return x_solutions, info_array, iteration_counts, all_residuals
+    return x_solutions, info_array, iteration_counts, all_residuals
