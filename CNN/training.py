@@ -1,11 +1,11 @@
 import tensorflow as tf
-import numpy as np
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+import os
+import os
+
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.losses import SparseCategoricalCrossentropy
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-import os
+
 
 # Define the training function
 def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epochs, log_dir):
@@ -97,11 +97,15 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
             print("Early stopping triggered")
             break
 
-    model.save_weights(os.path.join(log_dir, "best_model.weights.h5"))
+    model.save_weights("baseline_final.weights.h5")
 
     # Manually trigger on_train_end
     early_stopping.on_train_end()
     checkpoint.on_train_end()
+
+    # Log model weights after training
+    print("Model weights after training:")
+    print(model.get_weights())
 
     return model, train_losses, val_losses
 
