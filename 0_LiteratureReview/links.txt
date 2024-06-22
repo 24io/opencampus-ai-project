@@ -3,7 +3,7 @@ https://sc18.supercomputing.org/proceedings/workshops/workshop_files/ws_lasalss1
 git-repo von M. Götz:
 https://github.com/Markus-Goetz/block-prediction
 
-
+supervariable blocking: https://icl.utk.edu/files/publications/2018/icl-utk-1067-2018.pdf
 Shpakovych, M. (2023)
 https://inria.hal.science/hal-04254315/file/rt_0518.pdf
 
