@@ -19,6 +19,7 @@ def create_block_jacobi_preconditioner(
     :param sparse_matrices: An array of `symmetrical` and `sparse` input matrices on which to operate.
     :param block_start_indicator: A block start indicator of the input matrices where ones denote starts of blocks and
         zeros denote ends of blocks. Each matrix must start with a block.
+    :param apply_inverse_minmax_norm: A flag to indicate if a inverse minmax normalization should be applied.
 
     :returns np.ndarray: The array of computed preconditioner matrices.
 
@@ -83,30 +84,30 @@ def prepare_matrix(input_matrix: np.ndarray, mapping_type: str = "flip") -> np.n
 def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = None, rtol: float = 1e-3) -> tuple[
     np.ndarray, np.ndarray, np.ndarray, list]:
     """
-        Solve a system of linear equations using GMRES with optional preconditioning and monitoring.
+    Solve a system of linear equations using GMRES with optional preconditioning and monitoring.
 
-        This function solves Ax = b for multiple right-hand sides using the Generalized Minimal Residual method (GMRES).
-        It supports optional preconditioning and monitors the convergence process.
+    This function solves Ax = b for multiple right-hand sides using the Generalized Minimal Residual method (GMRES).
+    It supports optional preconditioning and monitors the convergence process.
 
-        Parameters:
-        A (np.ndarray): Coefficient matrix. Shape: (n, m, m)
-        b (np.ndarray): Right-hand side vector. Shape: (n, m)
-        M (np.ndarray, optional): Preconditioner matrix. Shape: (n, m, m). Default is None.
-        maxiter (int, optional): Maximum number of iterations. Default is 1000.
-        rtol (float, optional): Relative tolerance for convergence. Default is 1e-3.
+    Parameters:
+    A (np.ndarray): Coefficient matrix. Shape: (n, m, m)
+    b (np.ndarray): Right-hand side vector. Shape: (n, m)
+    M (np.ndarray, optional): Preconditioner matrix. Shape: (n, m, m). Default is None.
+    maxiter (int, optional): Maximum number of iterations. Default is 1000.
+    rtol (float, optional): Relative tolerance for convergence. Default is 1e-3.
 
-        Returns:
-        tuple:
-            - x_solutions (np.ndarray): Solution vectors. Shape: (n, m)
-            - info_array (np.ndarray): Information about the success of the solver for each system. Shape: (n,)
-            - iteration_counts (np.ndarray): Number of iterations for each system. Shape: (n,)
-            - all_residuals (list): List of residual norms for each system.
+    Returns:
+    tuple:
+        - x_solutions (np.ndarray): Solution vectors. Shape: (n, m)
+        - info_array (np.ndarray): Information about the success of the solver for each system. Shape: (n,)
+        - iteration_counts (np.ndarray): Number of iterations for each system. Shape: (n,)
+        - all_residuals (list): List of residual norms for each system.
 
-        Note:
-        - The function solves n separate linear systems, one for each slice of A and b.
-        - If a preconditioner M is provided, it is applied as a left preconditioner.
-        - The function monitors and returns the residual norms at each iteration.
-        """
+    Note:
+    - The function solves n separate linear systems, one for each slice of A and b.
+    - If a preconditioner M is provided, it is applied as a left preconditioner.
+    - The function monitors and returns the residual norms at each iteration.
+    """
     n, m, _ = A.shape
     x_solutions = np.zeros_like(b)
     info_array = np.zeros(n, dtype=int)
