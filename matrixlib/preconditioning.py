@@ -1,10 +1,14 @@
+# encoding: utf-8
 import numpy as np
-import scipy
+
+from scipy.linalg import inv, pinv, LinAlgError
 from scipy.sparse.linalg import gmres
 
 
-def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
-                                                 prediction_indicator_array: np.ndarray) -> np.ndarray:
+def block_jacobi_preconditioner_from_predictions(
+        input_matrix: np.ndarray,
+        prediction_indicator_array: np.ndarray
+) -> np.ndarray:
     """
         Compute a block Jacobi preconditioner based on predicted block structure.
 
@@ -26,7 +30,7 @@ def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
         - The diagonal elements of the final preconditioner are set to 1.0.
         """
     n, m, _ = input_matrix.shape
-    prec = np.zeros_like(input_matrix)
+    precon = np.zeros_like(input_matrix)
 
     for k in range(n):
 
@@ -41,17 +45,20 @@ def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
             block = input_matrix[k, start:end, start:end]
 
             try:
-                prec[k, start:end, start:end] = scipy.linalg.inv(block)  # Invert each block
-            except np.linalg.LinAlgError:  # pseudo
-                print(f"Matrix is singular, using pseudo-inverse for block {k} at indices {start}:{end}")
-                prec[k, start:end, start:end] = scipy.linalg.pinv(block)
+                precon[k, start:end, start:end] = inv(block)  # Invert each block
+            except LinAlgError as e:
+                if e.args[0] == "singular matrix":
+                    print(f"Block is singular, using pseudo-inverse for block {k:4d} at indices {start}:{end}")
+                    precon[k, start:end, start:end] = pinv(block)
+                else:
+                    raise e
 
         # Normalise nonzero elements to range (-1, 0)
-        val_min, val_max = prec[k].min(), prec[k].max()
-        prec[k] = -1 + (prec[k] - val_min) / (val_max - val_min)
-        prec[k][np.diag_indices(m)] = 1.0
+        val_min, val_max = precon[k].min(), precon[k].max()
+        precon[k] = -1 + (precon[k] - val_min) / (val_max - val_min)
+        precon[k][np.diag_indices(m)] = 1.0
 
-    return prec
+    return precon
 
 
 def prepare_matrix(A: np.ndarray, method: str = 'flip') -> np.ndarray:
