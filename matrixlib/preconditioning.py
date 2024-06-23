@@ -53,31 +53,31 @@ def create_block_jacobi_preconditioner(
     return precon
 
 
-def prepare_matrix(A: np.ndarray) -> np.ndarray:
+def prepare_matrix(input_matrix: np.ndarray, mapping_type: str = "flip") -> np.ndarray:
+    """ Modifies the input matrix to ensure non-singularity by replacing all nonzero entries with values in the
+    interval (-1, 0) and setting all diagonal values to 1.0.
+
+    :param input_matrix: A ``np.ndarray`` of shape (``n``, ``m``, ``m``) representing n square matrices.
+    :param mapping_type: One of ['flip', 'flip_norm', 'shift_norm'] to control the type of preparation.
+        'flip' just applies a factor of -1. Intended for matrices with values in [0, 1]
+        'flip_norm' first applies the minmax-norm and then a factor of -1
+        'shift_norm' first applies the minmax-norm and then an offset of -1
+    :return: A ``np.ndarray`` of shape (``n``, ``m``, ``m``) with modified values.
     """
-    Modifies the input matrix to ensure non-singularity by replacing all nonzero entries with values in the range (-1, 0) and setting all diagonal values to 1.0.
+    if len(input_matrix.shape) != 3:
+        raise ValueError(f"Provided 'input_matrix' must be of shape (n, m, m). Got {input_matrix.shape}")
 
-    Args:
-    :param A: NumPy array of shape (n, m, m) representing n square matrices of size m x m.
-    :return: NumPy array of shape (n, m, m) with modified values.
-    """
-    A_prep = A.copy()
+    result_matrix: np.ndarray = input_matrix.copy()
 
-    # # Identify nonzero elements using boolean mask
-    # nonzero_mask = A_prep != 0
-    #
-    # # Normalise nonzero elements to range (-1, 0)
-    # nonzero_vals = A_prep[nonzero_mask]
-    # min_val, max_val = nonzero_vals.min(), nonzero_vals.max()
-    # A_prep[nonzero_mask] = -1 + (nonzero_vals - min_val) / (max_val - min_val)
+    match mapping_type:
+        case "flip": result_matrix *= -1.0
+        case "flip_norm": util.apply_minmax_norm(result_matrix, factor=-1.0)
+        case "shift_norm": util.apply_minmax_norm(result_matrix, offset=-1.0)
+        case _: raise ValueError(f"Invalid mapping_type '{mapping_type}'")
 
-    # flip values from [0, 1]  to [-1, 0]
-    A_prep -= 1
+    np.fill_diagonal(result_matrix, 1.0)
 
-    # Set diagonal to 1.0
-    np.fill_diagonal(A_prep, 1.0)
-
-    return A_prep
+    return result_matrix
 
 
 def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = None, rtol: float = 1e-3) -> tuple[
