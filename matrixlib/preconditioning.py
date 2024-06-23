@@ -63,40 +63,39 @@ def generate_block_jacobi_preconditioner(
     return precon
 
 
-def prepare_matrix(A: np.ndarray, method: str = 'flip') -> np.ndarray:
+def prepare_matrix(input_matrix: np.ndarray, mapping_type: str = "flip") -> np.ndarray:
+    """ Modifies the input matrix to ensure non-singularity by replacing all nonzero entries with values in the
+    interval (-1, 0) and setting all diagonal values to 1.0.
+
+    :param input_matrix: A ``np.ndarray`` of shape (``n``, ``m``, ``m``) representing n square matrices.
+    :param mapping_type: One of ['flip', 'flip_norm', 'shift_norm'] to control the type of preparation.
+        'flip' just applies a factor of -1. Intended for matrices with values in [0, 1]
+        'flip_norm' first applies the minmax-norm and then a factor of -1
+        'shift_norm' first applies the minmax-norm and then an offset of -1
+    :return: A ``np.ndarray`` of shape (``n``, ``m``, ``m``) with modified values.
     """
-    Modifies the input matrix to ensure non-singularity by replacing all nonzero entries with values in the range (-1, 0) and setting all diagonal values to 1.0.
+    number_of_matrices: int
+    if 2 <= len(input_matrix.shape) <= 3:
+        raise ValueError(f"Provided 'input_matrix' must be of shape (n, m, m) or (m, m). Got {input_matrix.shape}")
 
-    Args:
-    :param A: NumPy array of shape (n, m, m) representing n square matrices of size m x m.
-    :param method: String, either 'flip' or 'minmax'. Default is 'flip'.
-    :return: NumPy array of shape (n, m, m) with modified values.
-    """
-    A_prep = A.copy()
+    number_of_matrices = 1 if len(input_matrix.shape) == 2 else input_matrix.shape[0]
 
-    if method == 'minmax':
-        # Identify nonzero elements using boolean mask
-        nonzero_mask = A_prep != 0
+    result_matrix: np.ndarray = input_matrix.copy()
+    match mapping_type:
+        case "minmax": util.apply_minmax_norm(result_matrix)
+        case "flip":        result_matrix *= -1.0
+        case "flip_norm":   util.apply_minmax_norm(result_matrix, factor=-1.0)
+        case "shift":       result_matrix += -1.0
+        case "shift_norm":  util.apply_minmax_norm(result_matrix, offset=-1.0)
+        case _: raise ValueError(f"Invalid mapping_type '{mapping_type}'")
 
-        # Normalise nonzero elements to range (-1, 0)
-        nonzero_vals = A_prep[nonzero_mask]
-        min_val, max_val = nonzero_vals.min(), nonzero_vals.max()
-        A_prep[nonzero_mask] = -1 + (nonzero_vals - min_val) / (max_val - min_val)
-
-    elif method == 'flip':
-        # flip values from [0, 1] to [-1, 0]
-        A_prep *= -1.0
-
-    elif method == 'shift':
-        # shift values from [0, 1] to [-1, 0]
-        A_prep += -1.0
+    if len(input_matrix.shape) == 2:
+        np.fill_diagonal(result_matrix, 1.0)
     else:
-        raise ValueError("Method must be either 'flip', 'shift', or 'minmax'")
+        for i in range(number_of_matrices):
+            np.fill_diagonal(result_matrix[i], 1.0)
 
-    # Set diagonal to 1.0
-    np.fill_diagonal(A_prep, 1.0)
-
-    return A_prep
+    return result_matrix
 
 
 def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = None, rtol: float = 1e-3) -> tuple[
