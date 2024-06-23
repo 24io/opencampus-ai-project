@@ -1,15 +1,18 @@
 import numpy as np
-import scipy as sp
+
+from scipy.sparse.linalg import inv
 from scipy.sparse.linalg import gmres
 
+from . import util
 
-def create_block_jacobi_preconditioner(input_matrices: np.ndarray, block_start_indicator: np.ndarray) -> np.ndarray:
+
+def create_block_jacobi_preconditioner(sparse_matrices: np.ndarray, block_start_indicator: np.ndarray) -> np.ndarray:
     """Compute a block Jacobi preconditioner from a matrix and its block start indicator.
 
     This function creates a preconditioner matrix by inverting blocks of the input matrix and applying min-max
     normalization. The block structure is determined by the ``block_start_indicator`` array.
 
-    :param input_matrices: An array of `symmetrical` input matrices on which to operate.
+    :param sparse_matrices: An array of `symmetrical` and `sparse` input matrices on which to operate.
     :param block_start_indicator: A block start indicator of the input matrices where ones denote starts of blocks and
         zeros denote ends of blocks. Each matrix must start with a block.
 
@@ -22,9 +25,9 @@ def create_block_jacobi_preconditioner(input_matrices: np.ndarray, block_start_i
     """
     n: int  # number of the matrices
     m: int  # dimension of the symmetrical matrices
-    n, m, _ = input_matrices.shape
+    n, m, _ = sparse_matrices.shape
 
-    precon: np.ndarray = np.zeros_like(input_matrices)
+    precon: np.ndarray = np.zeros_like(sparse_matrices)
     for k in range(n):
 
         # Convert block start indicator arrays to arrays of indices indicating block starts. As block starts also mirror
@@ -34,12 +37,12 @@ def create_block_jacobi_preconditioner(input_matrices: np.ndarray, block_start_i
         for i in range(len(block_starts) - 1):
             start = block_starts[i]
             end = block_starts[i + 1]
-            block = input_matrices[k, start:end, start:end]
-            precon[k, start:end, start:end] = sp.linalg.inv(block)  # Invert single block
+            block = sparse_matrices[k, start:end, start:end]
+            precon[k, start:end, start:end] = inv(block)  # Invert single block
 
-        # Normalise nonzero elements to range (-1, 0)
-        val_min, val_max = precon[k].min(), precon[k].max()
-        precon[k] = -1 + (precon[k] - val_min) / (val_max - val_min)
+        # Map the values of the preconditioner by f: [min, max] -> [-1, 0], f(A) = -1 * minmax(A) for preconditioner A.
+        util.apply_minmax_norm(precon[k], factor=-1.0)
+        # Set all diagonal values to one. In summary this and the previous operation should prevent singularities.
         precon[k][np.diag_indices(m)] = 1.0
 
     return precon
