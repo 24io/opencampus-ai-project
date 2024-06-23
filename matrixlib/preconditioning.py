@@ -172,3 +172,59 @@ def solve_with_gmres_monitored(
     print(f"  iterations: {iteration_counts}")
 
     return x_solutions, info_array, iteration_counts, all_residuals
+
+
+if __name__ == "__main__":
+    # only import this when running manual tests
+    import core
+    from numpy.linalg import cond
+
+    MATRIX_DIM = 64
+    NUMBER_OF_MATRICES = 100
+    DIAGONAL_BAND_RADIUS = 10
+
+    bgr_noise_value_props = core.ValueProperties(density_range=(0.3, 0.5), value_range=(0.0, 0.5))
+    noise_blk_value_props = core.ValueProperties(density_range=(0.3, 0.5), value_range=(0.3, 1.0))
+    noise_blk_block_props = core.BlockProperties(size_range=(3, 32), size_average=10, size_std_dev=0.66, gap_chance=0.5)
+    tdata_blk_value_props = core.ValueProperties(density_range=(0.5, 0.7), value_range=(0.3, 1.0))
+    tdata_blk_block_props = core.BlockProperties(size_range=(2, 32), size_average=10, size_std_dev=0.66, gap_chance=0.0)
+
+    test_data = core.MatrixData(
+        dimension=MATRIX_DIM,
+        band_radius=DIAGONAL_BAND_RADIUS,
+        sample_size=NUMBER_OF_MATRICES,
+        background_noise_value_properties=bgr_noise_value_props,
+        block_noise_value_properties=noise_blk_value_props,
+        block_noise_block_properties=noise_blk_block_props,
+        block_data_value_properties=tdata_blk_value_props,
+        block_data_block_properties=tdata_blk_block_props,
+        seed=42,
+        determinant_cutoff=0.01,
+        print_debug=False
+    )
+
+    # prepare test_data with negative minmax norm and diagonal ones.
+    matrices = test_data.matrices
+    prepared_test_data = prepare_matrix(input_matrix=test_data.matrices, mapping_type="shift")
+    precon_data = generate_block_jacobi_preconditioner(
+        test_data.matrices, test_data.tdata_blk_starts, apply_inverse_minmax_norm=True)
+
+    print("-" * 80)
+    condition_numbers: np.ndarray = np.asarray([cond(precon_data[i]) for i in range(NUMBER_OF_MATRICES)])
+    print(f"preconditioner condition numbers: {condition_numbers[0:5]}")
+
+    # define all-ones solution vector
+    solution_vector: np.ndarray = np.ones((NUMBER_OF_MATRICES, MATRIX_DIM))
+
+    print("-" * 80)
+    # run GMRES with no preconditioner
+    print("Starting GMRES run with no preconditioner")
+    x_no_precon, info_no_precon, iters_no_precon, residuals_no_precon = solve_with_gmres_monitored(
+        matrix=prepared_test_data, b_vector=solution_vector, preconditioner=None, relative_tolerance=1e-3)
+    print("-" * 80)
+    # un GMRES with block Jacobi preconditioner
+    print("Starting GMRES run with preconditioner")
+    x_precon, info_precon, iters_precon, residuals_precon = solve_with_gmres_monitored(
+        matrix=prepared_test_data, b_vector=solution_vector, preconditioner=precon_data, relative_tolerance=1e-3)
+
+    print("All done.")
