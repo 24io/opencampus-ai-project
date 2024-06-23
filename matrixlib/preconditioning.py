@@ -76,9 +76,13 @@ def prepare_matrix(A: np.ndarray, method: str = 'flip') -> np.ndarray:
 
     elif method == 'flip':
         # flip values from [0, 1] to [-1, 0]
-        A_prep -= 1
+        A_prep *= -1.0
+
+    elif method == 'shift':
+        # shift values from [0, 1] to [-1, 0]
+        A_prep += -1.0
     else:
-        raise ValueError("Method must be either 'flip' or 'minmax'")
+        raise ValueError("Method must be either 'flip', 'shift', or 'minmax'")
 
     # Set diagonal to 1.0
     np.fill_diagonal(A_prep, 1.0)
