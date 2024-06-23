@@ -98,70 +98,72 @@ def prepare_matrix(input_matrix: np.ndarray, mapping_type: str = "flip") -> np.n
     return result_matrix
 
 
-def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = None, rtol: float = 1e-3) -> tuple[
-    np.ndarray, np.ndarray, np.ndarray, list]:
-    """
-        Solve a system of linear equations using GMRES with optional preconditioning and monitoring.
+def solve_with_gmres_monitored(
+        matrix: np.ndarray,
+        b_vector: np.ndarray,
+        preconditioner: np.ndarray = None,
+        relative_tolerance: float = 1e-3
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, list]:
+    """Solve a system of linear equations using GMRES with optional preconditioning and monitoring.
 
-        This function solves Ax = b for multiple right-hand sides using the Generalized Minimal Residual method (GMRES).
-        It supports optional preconditioning and monitors the convergence process.
+    This function solves ``Ax = b`` for given right-hand side ``b`` and matrix ``A`` using the Generalized Minimal
+    Residual method (GMRES).
+    It supports optional preconditioning and monitors the number of convergence steps.
 
-        Parameters:
-        A (np.ndarray): Coefficient matrix. Shape: (n, m, m)
-        b (np.ndarray): Right-hand side vector. Shape: (n, m)
-        M (np.ndarray, optional): Preconditioner matrix. Shape: (n, m, m). Default is None.
-        maxiter (int, optional): Maximum number of iterations. Default is 1000.
-        rtol (float, optional): Relative tolerance for convergence. Default is 1e-3.
+    :param matrix: A ``np.ndarray`` of shape (``n``, ``m``, ``m``) representing several coefficient matrices.
+    :param b_vector: A ``np.ndarray`` of shape (``n``, ``m``) representing the corresponding right-hand side vectors.
+    :param preconditioner: A ``np.ndarray`` of shape (``n``, ``m``, ``m``) representing the preconditioner matrices.
+    :param relative_tolerance: The relative tolerance for convergence. Default is 1e-3.
+    :return: a tuple of the solution vector and some metadata generated during the inversion steps.
 
-        Returns:
-        tuple:
-            - x_solutions (np.ndarray): Solution vectors. Shape: (n, m)
-            - info_array (np.ndarray): Information about the success of the solver for each system. Shape: (n,)
-            - iteration_counts (np.ndarray): Number of iterations for each system. Shape: (n,)
-            - all_residuals (list): List of residual norms for each system.
+    The returned tuple consists of the following elements:
+        - ``x_solutions``: ``np.ndarray`` of shape (``n``, ``m``) representing the solution vectors ``x``.
+        - ``info_array``: ``np.ndarray`` of shape (``n``) holding success information of the solver for each system.
+        - ``iteration_counts``: ``np.ndarray`` of shape (``n``) holding the number of iterations for each system.
+        - ``all_residuals``: ``list`` of residual norms for each system.
 
-        Note:
+    Note:
         - The function solves n separate linear systems, one for each slice of A and b.
-        - If a preconditioner M is provided, it is applied as a left preconditioner.
-        - The function monitors and returns the residual norms at each iteration.
-        """
-    n, m, _ = A.shape
-    x_solutions = np.zeros_like(b)
+        - If a preconditioner is provided, it is applied as a `left` preconditioner.
+        - The function monitors and returns the `residual norms` at each iteration.
+    """
+    print(matrix.shape)
+    n, m, _ = matrix.shape
+    x_solutions = np.zeros_like(b_vector)
     info_array = np.zeros(n, dtype=int)
     iteration_counts = np.zeros(n, dtype=int)
-    all_residuals = []
+    all_residuals: list[list[float]] = list[list[float]]()
 
-    def callback(rk, xk=None, sk=None):
+    def callback(residual_norm: float):  # note: type provided is actually np.float64
         iteration_count[0] += 1
-        residuals.append(rk)
+        residuals.append(residual_norm)
 
+    x_vector: np.ndarray = np.zeros_like(b_vector)
     for k in range(n):
         iteration_count = [0]
-        residuals = []
-
-        if M is not None:
-            # M_op = LinearOperator(matvec=lambda x: M[k] @ x, shape=(m, m))  # Apply preconditioner by multiplication
-            x, info = gmres(A[k], b[k], x0=np.zeros_like(b[k]), M=M[k], rtol=rtol, callback=callback,
-                            callback_type='pr_norm')
-        else:
-            x, info = gmres(A[k], b[k], x0=np.zeros_like(b[k]), rtol=rtol, callback=callback,
-                            callback_type='pr_norm')
-
+        residuals: list[float] = []
+        precon_k: np.ndarray = preconditioner[k] if preconditioner is not None else None
+        x, info = gmres(
+            matrix[k],
+            b_vector[k],
+            x0=x_vector[k],
+            M=precon_k,
+            rtol=relative_tolerance,
+            callback=callback,
+            callback_type='pr_norm'
+        )
         x_solutions[k] = x
         info_array[k] = info
         iteration_counts[k] = iteration_count[0]
         all_residuals.append(residuals)
-        if k % (n // 10) == 0:
-            print("*", end="")
-
-    print("")  # end the asterix-chain
 
     # Print summary statistics
+    print("")
+    print(f"{'With preconditioner:' if preconditioner is not None else 'Without preconditioner:'}")
     print("-" * 80)
-    print(f"{'With preconditioner:' if M is not None else 'Without preconditioner:'}")
     print(f"  Converged: {np.sum(info_array == 0)} out of {len(info_array)}")
     print(f"  Average iterations: {np.mean(iteration_counts):.2f}")
-    print(f"  iterations: {iteration_counts}")
     print("-" * 80)
+    print(f"  iterations: {iteration_counts}")
 
     return x_solutions, info_array, iteration_counts, all_residuals
