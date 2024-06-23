@@ -32,8 +32,8 @@ def apply_minmax_norm(matrices: np.array, factor: float = 1.0, offset: float = 0
     """
     num_of_matrices: int
     dim_of_matrices: int
-    num_of_matrices, dim_of_matrices, _ = matrices.shape
 
+    num_of_matrices, dim_of_matrices, _ = matrices.shape
     for i in range(num_of_matrices):
         val_min, val_max = matrices[i].min(), matrices[i].max()
         # normalize the matrix values to interval
