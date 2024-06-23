@@ -35,11 +35,9 @@ def block_jacobi_preconditioner_from_predictions(
 
     precon: np.ndarray = np.zeros_like(input_matrix)
     for k in range(n):
-
-        # Convert block start flags on array len=dim to list of indices of block starts
-        block_starts = np.where(prediction_indicator_array[k] == 1)[0]
-        # Add dim to end of this array so that the last block ends at the end of the matrix
-        block_starts = np.append(block_starts, m)
+        # Convert block start indicator arrays to arrays of indices indicating block starts. As block starts also mirror
+        # as block ends (exclusive), an entry of the dimension is added to the end of this array.
+        block_starts: np.ndarray = np.append(np.where(prediction_indicator_array[k] == 1)[0], m)
 
         for i in range(len(block_starts) - 1):
             start = block_starts[i]
