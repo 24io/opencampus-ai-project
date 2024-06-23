@@ -252,10 +252,10 @@ class MatrixData:
 
                 # guard against leaving a single element (instead expand current_block_size)
                 if self.dim - (current_block_size + row_index) < block_properties.len_min:
-                    current_block_size = self.dim - row_index - 1
+                    current_block_size = self.dim - row_index
 
                 # guard against overshooting the matrix size
-                if current_block_size + row_index >= self.dim:
+                if current_block_size + row_index > self.dim:
                     current_block_size = self.dim - row_index
                     if current_block_size < block_properties.len_max:
                         raise ValueError("Clamped block size is too small")
@@ -280,6 +280,8 @@ class MatrixData:
 
                     for i in range(j):
                         b = i + row_index
+                        if a == b:
+                            raise ValueError("Diagonal overwrite!")
                         if np.random.random() < block_density:
                             value: float = np.random.uniform(value_properties.val_min, value_properties.val_max)
                             self.matrices[mat_index][a][b] = np.float32(value)
