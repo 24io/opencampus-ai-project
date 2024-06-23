@@ -75,7 +75,7 @@ def prepare_matrix(input_matrix: np.ndarray, mapping_type: str = "flip") -> np.n
     :return: A ``np.ndarray`` of shape (``n``, ``m``, ``m``) with modified values.
     """
     number_of_matrices: int
-    if 2 <= len(input_matrix.shape) <= 3:
+    if not (2 <= len(input_matrix.shape) <= 3):
         raise ValueError(f"Provided 'input_matrix' must be of shape (n, m, m) or (m, m). Got {input_matrix.shape}")
 
     number_of_matrices = 1 if len(input_matrix.shape) == 2 else input_matrix.shape[0]
