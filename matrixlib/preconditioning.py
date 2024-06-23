@@ -1,79 +1,48 @@
 import numpy as np
-import scipy
-from scipy.sparse.linalg import gmres, LinearOperator
+import scipy as sp
+from scipy.sparse.linalg import gmres
 
 
-# def ensure_nonsingularity(A: np.ndarray, band_width: int = 10) -> np.ndarray:
-#     """
-#     Modifies the input matrices to ensure non-singularity by replacing all nonzero entries
-#     with values in the range (-1, 0) and setting all diagonal band values to 1.0.
-#
-#     Args:
-#         A: NumPy array of shape (n, m, m) representing n square matrices of size m x m.
-#         band_width: Width of the diagonal band to set to 1.0 (default is 1, which is just the main diagonal)
-#
-#     Returns:
-#         Modified NumPy array.
-#     """
-#     A_mod = np.copy(A)
-#     n, m, _ = A.shape
-#
-#     for k in range(n):
-#         # Replace nonzero off-diagonal elements with uniform random values in (-1, 0)
-#         mask = (A_mod[k] != 0) & ~np.eye(m, dtype=bool)
-#         A_mod[k][mask] = np.random.uniform(-1, 0, size=np.sum(mask))
-#
-#         # Set diagonal band to 1.0
-#         for i in range(m):
-#             for j in range(max(0, i-band_width+1), min(m, i+band_width)):
-#                 A_mod[k, i, j] = 1.0
-#
-#     return A_mod
+def create_block_jacobi_preconditioner(input_matrices: np.ndarray, block_start_indicator: np.ndarray) -> np.ndarray:
+    """Compute a block Jacobi preconditioner from a matrix and its block start indicator.
 
-def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
-                                                 prediction_indicator_array: np.ndarray) -> np.ndarray:
+    This function creates a preconditioner matrix by inverting blocks of the input matrix and applying min-max
+    normalization. The block structure is determined by the ``block_start_indicator`` array.
+
+    :param input_matrices: An array of `symmetrical` input matrices on which to operate.
+    :param block_start_indicator: A block start indicator of the input matrices where ones denote starts of blocks and
+        zeros denote ends of blocks. Each matrix must start with a block.
+
+    :returns np.ndarray: The array of computed preconditioner matrices.
+
+    Note:
+    - The function inverts each block of the input matrix.
+    - After inversion, min-max normalization is applied and values are inverted.
+    - The diagonal elements of the final preconditioner are set to 1.0.
     """
-        Compute a block Jacobi preconditioner based on predicted block structure.
+    n: int  # number of the matrices
+    m: int  # dimension of the symmetrical matrices
+    n, m, _ = input_matrices.shape
 
-        This function creates a preconditioner matrix by inverting blocks of the input matrix
-        and applying min-max normalization. The block structure is determined by the
-        prediction_indicator_array.
-
-        Parameters:
-        input_matrix (np.ndarray): The input matrix to be preconditioned. Shape: (n, m, m)
-        prediction_indicator_array (np.ndarray): Array indicating the start of each block.
-                                                 Shape: (n, m)
-
-        Returns:
-        np.ndarray: The computed preconditioner matrix. Shape: (n, m, m)
-
-        Note:
-        - The function inverts each block of the input matrix.
-        - After inversion, min-max normalization is applied and values are inverted.
-        - The diagonal elements of the final preconditioner are set to 1.0.
-        """
-    n, m, _ = input_matrix.shape
-    prec = np.zeros_like(input_matrix)
-
+    precon: np.ndarray = np.zeros_like(input_matrices)
     for k in range(n):
 
-        # Convert block start flags on array len=dim to list of indices of block starts
-        block_starts = np.where(prediction_indicator_array[k] == 1)[0]
-        # Add dim to end of this array so that the last block ends at the end of the matrix
-        block_starts = np.append(block_starts, m)
+        # Convert block start indicator arrays to arrays of indices indicating block starts. As block starts also mirror
+        # as block ends (exclusive), an entry of the dimension is added to the end of this array.
+        block_starts: np.ndarray = np.append(np.where(block_start_indicator[k] == 1)[0], m)
 
         for i in range(len(block_starts) - 1):
             start = block_starts[i]
             end = block_starts[i + 1]
-            block = input_matrix[k, start:end, start:end]
-            prec[k, start:end, start:end] = scipy.linalg.inv(block)  # Invert each block
+            block = input_matrices[k, start:end, start:end]
+            precon[k, start:end, start:end] = sp.linalg.inv(block)  # Invert single block
 
         # Normalise nonzero elements to range (-1, 0)
-        val_min, val_max = prec[k].min(), prec[k].max()
-        prec[k] = -1 + (prec[k] - val_min) / (val_max - val_min)
-        prec[k][np.diag_indices(m)] = 1.0
+        val_min, val_max = precon[k].min(), precon[k].max()
+        precon[k] = -1 + (precon[k] - val_min) / (val_max - val_min)
+        precon[k][np.diag_indices(m)] = 1.0
 
-    return prec
+    return precon
 
 
 def prepare_matrix(A: np.ndarray) -> np.ndarray:
