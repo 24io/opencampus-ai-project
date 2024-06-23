@@ -1,0 +1,8 @@
+# Ignore all files in this folder ...
+*
+
+# ... except the .gitignore itself ...
+!.gitignore
+
+# ... and the actual cover image
+!./cover_image.png
