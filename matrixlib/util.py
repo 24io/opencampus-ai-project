@@ -16,7 +16,7 @@ def generate_block_vector_hex_string(block_start_vector: np.array) -> str:
     return f"{int_rep:016x}"
 
 
-def apply_minmax_norm(matrices: np.array, factor: float = 1.0, offset: float = 0.0) -> None:
+def apply_minmax_norm(matrices: np.array, factor: float = 1.0, offset: float = 0.0) -> np.ndarray:
     """**Mutates** the given ``matrices`` applying min-max normalization with optional ``factor`` and ``offset``.
 
     The ``factor`` shifts the interval top (1) and resulting in the target interval [0, factor] or [factor, 0] of the
@@ -33,15 +33,19 @@ def apply_minmax_norm(matrices: np.array, factor: float = 1.0, offset: float = 0
     num_of_matrices: int
     dim_of_matrices: int
 
+    result = np.zeros_like(matrices)
     if len(matrices.shape) == 2:
         num_of_matrices = 1
-        dim_of_matrices, _ = matrices.shape
+        # transform to list since we need to access the single matrix as matrices[i]
+        matrices = [matrices]
+        result = [result]
     elif len(matrices.shape) == 3:
-        num_of_matrices, dim_of_matrices, _ = matrices.shape
+        num_of_matrices, _, _ = matrices.shape
     else:
         raise ValueError("Matrices must be either a 2-D matrix or an array of 2-D matrices")
 
     for i in range(num_of_matrices):
         val_min, val_max = matrices[i].min(), matrices[i].max()
-        # normalize the matrix values to interval
-        matrices[i] = (factor * ((matrices[i] - val_min) / (val_max - val_min))) + offset
+        result[i] = (factor * ((matrices[i] - val_min) / (val_max - val_min))) + offset
+
+    return np.asarray(result)
