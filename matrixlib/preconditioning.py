@@ -6,7 +6,11 @@ from scipy.sparse.linalg import gmres
 from . import util
 
 
-def create_block_jacobi_preconditioner(sparse_matrices: np.ndarray, block_start_indicator: np.ndarray) -> np.ndarray:
+def create_block_jacobi_preconditioner(
+        sparse_matrices: np.ndarray,
+        block_start_indicator: np.ndarray,
+        apply_inverse_minmax_norm: bool = True,
+) -> np.ndarray:
     """Compute a block Jacobi preconditioner from a matrix and its block start indicator.
 
     This function creates a preconditioner matrix by inverting blocks of the input matrix and applying min-max
@@ -40,10 +44,11 @@ def create_block_jacobi_preconditioner(sparse_matrices: np.ndarray, block_start_
             block = sparse_matrices[k, start:end, start:end]
             precon[k, start:end, start:end] = inv(block)  # Invert single block
 
-        # Map the values of the preconditioner by f: [min, max] -> [-1, 0], f(A) = -1 * minmax(A) for preconditioner A.
-        util.apply_minmax_norm(precon[k], factor=-1.0)
-        # Set all diagonal values to one. In summary this and the previous operation should prevent singularities.
-        precon[k][np.diag_indices(m)] = 1.0
+        if apply_inverse_minmax_norm:
+            # Map values of the preconditioner 'A' with f: [min, max] -> [-1, 0], f(A) = -1 * minmax(A).
+            util.apply_minmax_norm(precon[k], factor=-1.0)
+            # Set all diagonal values to one. In summary this and the previous operation should prevent singularities.
+            precon[k][np.diag_indices(m)] = 1.0
 
     return precon
 
