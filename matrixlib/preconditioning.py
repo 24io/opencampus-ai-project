@@ -29,9 +29,11 @@ def block_jacobi_preconditioner_from_predictions(
         - After inversion, min-max normalization is applied and values are inverted.
         - The diagonal elements of the final preconditioner are set to 1.0.
         """
+    n: int  # number of the matrices
+    m: int  # dimension of the symmetrical matrices
     n, m, _ = input_matrix.shape
-    precon = np.zeros_like(input_matrix)
 
+    precon: np.ndarray = np.zeros_like(input_matrix)
     for k in range(n):
 
         # Convert block start flags on array len=dim to list of indices of block starts
