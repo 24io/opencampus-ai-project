@@ -90,7 +90,6 @@ def prepare_matrix(A: np.ndarray, method: str = 'flip') -> np.ndarray:
     return A_prep
 
 
-
 def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = None, rtol: float = 1e-3) -> tuple[
     np.ndarray, np.ndarray, np.ndarray, list]:
     """
@@ -144,11 +143,17 @@ def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = Non
         info_array[k] = info
         iteration_counts[k] = iteration_count[0]
         all_residuals.append(residuals)
+        if k % (n // 10) == 0:
+            print("*", end="")
+
+    print("")  # end the asterix-chain
 
     # Print summary statistics
+    print("-" * 80)
     print(f"{'With preconditioner:' if M is not None else 'Without preconditioner:'}")
     print(f"  Converged: {np.sum(info_array == 0)} out of {len(info_array)}")
     print(f"  Average iterations: {np.mean(iteration_counts):.2f}")
     print(f"  iterations: {iteration_counts}")
+    print("-" * 80)
 
     return x_solutions, info_array, iteration_counts, all_residuals
