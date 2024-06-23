@@ -1,10 +1,15 @@
 import numpy as np
 
 
-def generate_block_vector_hex_string(block_vector: np.array) -> str:
+def generate_block_vector_hex_string(block_start_vector: np.array) -> str:
+    """Creates a hex string representing the ones and zeroes of a given block start vector.
+
+    :param block_start_vector: A ``np.ndarray`` indicating the starts of blocks in an associated matrix.
+    :return: A ``str`` of the hex representation of the block start vector.
+    """
     base = 1  # use this base 'counter' to prevent call of pow()
     int_rep = 0
-    for e in block_vector:
+    for e in block_start_vector:
         if e != 0:
             int_rep += base
         base *= 2
