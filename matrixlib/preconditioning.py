@@ -220,11 +220,17 @@ if __name__ == "__main__":
     # run GMRES with no preconditioner
     print("Starting GMRES run with no preconditioner")
     x_no_precon, info_no_precon, iters_no_precon, residuals_no_precon = solve_with_gmres_monitored(
-        matrix=prepared_test_data, b_vector=solution_vector, preconditioner=None, relative_tolerance=1e-3)
+        matrix=matrices, b_vector=solution_vector, preconditioner=None, relative_tolerance=1e-3)
     print("-" * 80)
     # un GMRES with block Jacobi preconditioner
     print("Starting GMRES run with preconditioner")
     x_precon, info_precon, iters_precon, residuals_precon = solve_with_gmres_monitored(
-        matrix=prepared_test_data, b_vector=solution_vector, preconditioner=precon_data, relative_tolerance=1e-3)
+        matrix=matrices, b_vector=solution_vector, preconditioner=precon_data, relative_tolerance=1e-3)
+
+    print("Determinants of singular (non-solvable) matrices")
+    iterations: np.ndarray = iters_precon
+    singular_indices = np.where(iterations == 12800)[0]
+    selected_determinants = [test_data.metadata[i].det for i in singular_indices]
+    print(selected_determinants)
 
     print("All done.")
