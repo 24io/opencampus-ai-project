@@ -142,12 +142,17 @@ def solve_with_gmres_monitored(
     for k in range(n):
         iteration_count = [0]
         residuals: list[float] = []
-        precon_k: np.ndarray = preconditioner[k] if preconditioner is not None else None
+
+        run_matrix: np.ndarray = matrix[k]
+        run_b_vector: np.ndarray = b_vector[k]
+        if preconditioner is not None:  # apply preconditioner, if a preconditioner is provided
+            run_matrix = preconditioner[k] @ matrix[k]
+            run_b_vector = preconditioner[k] @ b_vector[k]
+
         x, info = gmres(
-            matrix[k],
-            b_vector[k],
+            A=run_matrix,
+            b=run_b_vector,
             x0=x_vector[k],
-            M=precon_k,
             rtol=relative_tolerance,
             callback=callback,
             callback_type='pr_norm'
