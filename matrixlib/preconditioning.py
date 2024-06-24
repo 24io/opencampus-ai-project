@@ -42,7 +42,7 @@ def block_jacobi_preconditioner_from_predictions(input_matrix: np.ndarray,
 
             try:
                 prec[k, start:end, start:end] = scipy.linalg.inv(block)  # Invert each block
-            except np.linalg.LinAlgError:  # pseudo
+            except np.linalg.LinAlgError:  # pseudo-inverse
                 print(f"Matrix is singular, using pseudo-inverse for block {k} at indices {start}:{end}")
                 prec[k, start:end, start:end] = scipy.linalg.pinv(block)
 
@@ -76,15 +76,18 @@ def prepare_matrix(A: np.ndarray, method: str = 'flip') -> np.ndarray:
 
     elif method == 'flip':
         # flip values from [0, 1] to [-1, 0]
-        A_prep -= 1
+        A_prep *= -1.0
+
+    elif method == 'shift':
+        # shift values from [0, 1] to [-1, 0]
+        A_prep += -1.0
     else:
-        raise ValueError("Method must be either 'flip' or 'minmax'")
+        raise ValueError("Method must be either 'flip', 'shift', or 'minmax'")
 
     # Set diagonal to 1.0
     np.fill_diagonal(A_prep, 1.0)
 
     return A_prep
-
 
 
 def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = None, rtol: float = 1e-3) -> tuple[
@@ -99,7 +102,6 @@ def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = Non
         A (np.ndarray): Coefficient matrix. Shape: (n, m, m)
         b (np.ndarray): Right-hand side vector. Shape: (n, m)
         M (np.ndarray, optional): Preconditioner matrix. Shape: (n, m, m). Default is None.
-        maxiter (int, optional): Maximum number of iterations. Default is 1000.
         rtol (float, optional): Relative tolerance for convergence. Default is 1e-3.
 
         Returns:
@@ -142,9 +144,9 @@ def solve_with_gmres_monitored(A: np.ndarray, b: np.ndarray, M: np.ndarray = Non
         all_residuals.append(residuals)
 
     # Print summary statistics
-    print(f"{'With preconditioner:' if M is not None else 'Without preconditioner:'}")
+    # print(f"{'With preconditioner:' if M is not None else 'Without preconditioner:'}")
     print(f"  Converged: {np.sum(info_array == 0)} out of {len(info_array)}")
     print(f"  Average iterations: {np.mean(iteration_counts):.2f}")
-    print(f"  iterations: {iteration_counts}")
+    # print(f"  iterations: {iteration_counts}")
 
     return x_solutions, info_array, iteration_counts, all_residuals
