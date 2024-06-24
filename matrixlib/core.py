@@ -73,6 +73,7 @@ class MatrixData:
     band_rad: int
     dim: int
     determinant_cutoff: float
+    force_nonzero_diag: bool
     band_padding_value: np.float32
 
     # parameters
@@ -106,6 +107,7 @@ class MatrixData:
             seed: int = None,
             determinant_cutoff: float = 0.0,
             print_debug: bool = False,
+            force_nonzero_diag: bool = True,
             band_padding_value: np.float32 = 0.0,
     ):
         self.dim = dimension
@@ -122,6 +124,7 @@ class MatrixData:
         # flags and values used during generation
         self.band_padding_value = band_padding_value
         self.determinant_cutoff = determinant_cutoff
+        self.force_nonzero_diag = force_nonzero_diag
         self.seed = seed
         self.debug = print_debug
 
@@ -249,22 +252,36 @@ class MatrixData:
 
                 # guard against leaving a single element (instead expand current_block_size)
                 if self.dim - (current_block_size + row_index) < block_properties.len_min:
-                    current_block_size = self.dim - row_index - 1
+                    current_block_size = self.dim - row_index
 
                 # guard against overshooting the matrix size
-                if current_block_size + row_index >= self.dim:
+                if current_block_size + row_index > self.dim:
                     current_block_size = self.dim - row_index
                     if current_block_size < block_properties.len_max:
                         raise ValueError("Clamped block size is too small")
 
                 for j in range(current_block_size):
                     a = j + row_index
-                    # set diagonal to value
-                    if np.random.random() < block_density:
+
+                    # ================================================================
+                    # enable the code to force all diagonal values to be non-zero if requested
+                    if self.force_nonzero_diag:
+                        # allways set diagonal to value
                         value: float = np.random.uniform(value_properties.val_min, value_properties.val_max)
+                        if value == 0.0:
+                            value = 1.0  # this changes interval [0, 1) to (0, 1]
                         self.matrices[mat_index][a][a] = np.float32(value)
+                    else:
+                        # set diagonal to value
+                        if np.random.random() < block_density:
+                            value: float = np.random.uniform(value_properties.val_min, value_properties.val_max)
+                            self.matrices[mat_index][a][a] = np.float32(value)
+                    # ================================================================
+
                     for i in range(j):
                         b = i + row_index
+                        if a == b:
+                            raise ValueError("Diagonal overwrite!")
                         if np.random.random() < block_density:
                             value: float = np.random.uniform(value_properties.val_min, value_properties.val_max)
                             self.matrices[mat_index][a][b] = np.float32(value)
