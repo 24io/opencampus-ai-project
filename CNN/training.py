@@ -1,8 +1,10 @@
 import os
 
-import tensorflow as tf
+import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import tensorflow as tf
 
 # Define the training function
 def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epochs, log_dir):
@@ -34,6 +36,9 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
     6. Saves the final model weights.
     7. Returns the trained model, training losses, and validation losses.
     """
+    # Get model class name
+    model_class_name = model.__class__.__name__
+
     # Create TensorBoard writer
     writer = tf.summary.create_file_writer(log_dir)
 
@@ -45,7 +50,7 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
         restore_best_weights=True
     )
     checkpoint = ModelCheckpoint(
-        filepath=os.path.join(log_dir, "model.{epoch:02d}-{val_loss:.4f}.weights.h5"),
+        filepath=os.path.join(log_dir, f"{model_class_name}.{{epoch:02d}}-{{val_loss:.4f}}.weights.h5"),
         monitor='val_loss',
         save_best_only=True,
         save_weights_only=True
@@ -94,7 +99,7 @@ def train_model(model, train_dataset, val_dataset, loss_fn, optimizer, num_epoch
             print("Early stopping triggered")
             break
 
-    model.save_weights("baseline_final.weights.h5")
+    model.save_weights(f'{model_class_name}_final.weights.h5')
 
     # Manually trigger on_train_end
     early_stopping.on_train_end()
@@ -181,3 +186,27 @@ def validate_one_epoch(model, val_dataset, loss_fn):
     epoch_val_loss /= len(val_dataset)
     return epoch_val_loss
 
+
+# Define function to plot losses
+def plot_losses(train_losses, val_losses):
+    """
+    Plots the training and validation losses.
+
+    Args:
+        train_losses (list of float): List of training losses per epoch.
+        val_losses (list of float): List of validation losses per epoch.
+    """
+    plt.figure(figsize=(10, 6))
+    plt.plot(train_losses, label='Train Loss')
+    plt.plot(val_losses, label='Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Training and Validation Loss Over Epochs')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+# TODO: Add Weight Initialisation (Xavier)
+# TODO: Add Class Weights
+# TODO: maybe Add Learning Rate Scheduler
+# TDO: add initial bias
