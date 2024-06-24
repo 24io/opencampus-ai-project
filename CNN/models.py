@@ -1,5 +1,6 @@
 # Import necessary libraries
-from tensorflow.keras.layers import *
+import tensorflow as tf
+from tensorflow.keras.layers import Conv2D, BatchNormalization, Activation, Flatten, Dense, Dropout, ZeroPadding2D
 from tensorflow.keras.regularizers import l2
 
 
