@@ -1,6 +1,6 @@
-from matplotlib import pyplot as plt
-import seaborn as sns
 import numpy as np
+import seaborn as sns
+from matplotlib import pyplot as plt
 
 from . import core, util
 
@@ -55,6 +55,8 @@ def plot_matrices_and_metadata(
     num_of_subplots = len(matrix_indices)
     row_col_number = cols * 100 + rows * 10
 
+    figure.patch.set_alpha(0.0)  # make background transparent
+
     for i in range(num_of_subplots):
         this_index = matrix_indices[i]
         this_hex_str = util.generate_block_vector_hex_string(matrix_data.noise_blk_starts[this_index])
@@ -69,6 +71,7 @@ def plot_matrices_and_metadata(
             cbar=False,
             square=True
         )
+        sp1.patch.set_alpha(0.0)  # make subplot 1 transparent
 
         sp2 = figure.add_subplot(cols, rows, SUBPLOTS * i + 2)
         sp2.set_title(f"Matrix [{this_index}] values")
@@ -82,6 +85,7 @@ def plot_matrices_and_metadata(
             vmin=0,
             vmax=1
         )
+        sp2.patch.set_alpha(0.0)  # make subplot 2 transparent
 
         sp3 = figure.add_subplot(cols, rows, SUBPLOTS * i + 3)
         sp3.set_title(f"Matrix [{this_index}] noise blocks")
@@ -94,6 +98,8 @@ def plot_matrices_and_metadata(
             square=True
         )
 
+        sp3.patch.set_alpha(0.0)  # make subplot 3 transparent
+
         sp4 = figure.add_subplot(cols, rows, SUBPLOTS * i + 4)
         sp4.set_title(f"Matrix [{this_index}] data blocks")
         sns.heatmap(
@@ -104,3 +110,5 @@ def plot_matrices_and_metadata(
             cbar=False,
             square=True
         )
+
+        sp4.patch.set_alpha(0.0)  # make subplot 4 transparent
