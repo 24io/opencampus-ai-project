@@ -1,13 +1,14 @@
-# Import necessary libraries
 from tensorflow.keras import Model as KerasModel
 from tensorflow.keras import layers
 from tensorflow.keras.regularizers import l2
+
+from modellib.losses import weighted_binary_crossentropy
 
 
 class Baseline(KerasModel):
     def __init__(self, input_shape):
         super(Baseline, self).__init__()
-        self.input_shape = input_shape
+        self._input_shape = input_shape
 
         # First bottleneck unit
         self.bn1 = layers.BatchNormalization()
@@ -29,6 +30,9 @@ class Baseline(KerasModel):
         self.classify = layers.Dense(512, activation='sigmoid')
         self.dropout = layers.Dropout(0.1)
         self.result = layers.Dense(input_shape[1], activation='sigmoid')
+
+    def build(self, input_shape):
+        super(Baseline, self).build(input_shape)
 
     def call(self, inputs, training=False):
         # First bottleneck unit
@@ -56,10 +60,21 @@ class Baseline(KerasModel):
 
         return x
 
-    def build(self, input_shape):
-        super(Baseline, self).build(input_shape)
-        self.call(layers.Input(shape=input_shape[1:]))
-
-    def model(self):
+    def build_graph(self):
         x = layers.Input(shape=self.input_shape)
         return KerasModel(inputs=[x], outputs=self.call(x))
+
+
+# Function to create the model and compile it with the custom loss function
+def create_compile_model_custom_loss(input_shape, optimizer, class_weights, metrics=None):
+    model = Baseline(input_shape)
+    model.build(input_shape=(None,) + input_shape)
+
+    # Compile with custom loss function
+    model.compile(
+        loss=lambda y_true, y_pred: weighted_binary_crossentropy(y_true, y_pred, class_weights),
+        optimizer=optimizer,
+        metrics=metrics
+    )
+
+    return model
