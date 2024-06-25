@@ -8,7 +8,7 @@ from modellib.losses import weighted_binary_crossentropy
 class Baseline(KerasModel):
     def __init__(self, input_shape):
         super(Baseline, self).__init__()
-        self._input_shape = input_shape
+        self.input_shape = input_shape
 
         # First bottleneck unit
         self.bn1 = layers.BatchNormalization()
@@ -66,7 +66,7 @@ class Baseline(KerasModel):
 
 
 # Function to create the model and compile it with the custom loss function
-def create_compile_model_custom_loss(input_shape, optimizer, class_weights, metrics=None):
+def create_compile_model_custom_loss(input_shape, optimizer, class_weights, metrics=False):
     model = Baseline(input_shape)
     model.build(input_shape=(None,) + input_shape)
 
