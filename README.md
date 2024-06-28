@@ -1,16 +1,45 @@
-# [Your Project Title Here]
+# Detection of block structures in Matrix Sparsity Patterns
 
 ## Repository Link
 
-[https://github.com/your_username/your_project_name]
+[GitHub repo "opencampus-preconditioner-ai-project"](https://github.com/24io/opencampus-preconditioner-ai-project)
 
 ## Description
 
-[Short project description here. Briefly summarize the problem you are trying to solve and the approach you're taking.]
+Given a matrix `A` of dimensions `m * m` and vectors `x`, `b` of length `m` we want to solve the system:
+```
+A * x = b
+```
+An often used approach in (finite element) simulations ist to approximate the result using an iterative method.
+However, the number of iterations required for solving these systems wil be quite large for most matrices.
+
+To improve this convergence speed a preconditioner matrix `P` can be applied to both sides of the equations:
+```
+P * A * x = P * b
+```
+Here `P * A` and `P * b` can be easily computed. We then solve the resulting system:
+```
+A' * x = b'
+```
+If `P` is cleverly chosen then the number iterations for solving this system will be significantly smaller.
+
+A common preconditioner can be a Block-Jacobi-Inverse. Here blocks of variables are identified in the Matrix `A`.
+Only these blocks are inverted which commonly can be done quite fast when their dimensions ar significantly smaller than
+the dimensions of the matrix itself.
+
+The tricky part is identifying the connected blocks in a matrix, especially when noisy blocks not representing true data
+are also present in the matrix.
+
+Since the matrices can be treated as images, this is an ideal job for a convolutional neural network (CNN).
+
+We try to reproduce the model presented in [Götz & Anzt (2018)](
+https://sc18.supercomputing.org/proceedings/workshops/workshop_files/ws_lasalss102s2-file1.pdf) to learn about the
+pitfalls of implementing the data generation, training and fine-tuning the model, and finally experiment with changing
+the parameters of the generated matrices to find the limits of our models.
 
 ### Task Type
 
-[Image Classification / Chatbot / Regression / Clustering / Other]
+Other (but can be interpreted as a form of image classification)
 
 ### Results Summary
 
