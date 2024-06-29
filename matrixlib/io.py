@@ -38,7 +38,7 @@ def write_matrix_to_file(
             f"{true_block_density:0.3f}-" +
             f"{block_start_hex_str}"
         )
-    img.save(f"{base_path}/data/{file_name}.png", "PNG")
+    img.save(f"{base_path}/{file_name}.png", "PNG")
 
 
 def read_matrix_from_file(file_path: str) -> np.ndarray:
