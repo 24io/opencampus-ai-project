@@ -27,9 +27,9 @@ class BlockProperties:
 
     def __init__(self, size_range: tuple[int, int], size_average: float, size_std_dev: float, gap_chance: float):
         if not size_range[0] > 0:
-            raise ValueError('size_range lower bound must be greater than zero')
+            raise ValueError("size_range lower bound must be greater than zero")
         if not size_range[0] < size_range[1]:
-            raise ValueError('lower bounds must be smaller than uppers bound')
+            raise ValueError("lower bounds must be smaller than uppers bound")
         self.len_min, self.len_max = size_range
         self.len_avg = size_average
         self.len_sdv = size_std_dev
@@ -197,21 +197,24 @@ class MatrixData:
             abs_determinants: np.ndarray = np.asarray([abs(self.metadata[i].det) for i in range(self.len)])
             print(f"determinant abs-value range: [{abs_determinants.min()}, {abs_determinants.max()}]")
 
-            # make a histogram for the block sizes
-            pyplot.hist(
-                self.get_list_of_block_sizes(self.tdata_blk_starts),
-                bins=list(range(self.blk_noise_bp.len_min, self.blk_noise_bp.len_max + 1)),
-                alpha=0.5,
-                label='Noise'
-            )
-            pyplot.hist(
-                self.get_list_of_block_sizes(self.noise_blk_starts),
-                bins=list(range(self.blk_tdata_bp.len_min, self.blk_tdata_bp.len_max + 1)),
-                alpha=0.5,
-                label='Data'
-            )
-            pyplot.legend(loc='upper right')
-            pyplot.show()
+            self.plot_block_size_histogram()
+
+    def plot_block_size_histogram(self):
+        # make a histogram for the block sizes
+        pyplot.hist(
+            self.get_list_of_block_sizes("tdata"),
+            bins=list(range(self.blk_noise_bp.len_min, self.blk_noise_bp.len_max + 1)),
+            alpha=0.5,
+            label="Noise"
+        )
+        pyplot.hist(
+            self.get_list_of_block_sizes("noise"),
+            bins=list(range(self.blk_tdata_bp.len_min, self.blk_tdata_bp.len_max + 1)),
+            alpha=0.5,
+            label="Data"
+        )
+        pyplot.legend(loc="upper right")
+        pyplot.show()
 
     def __add_background_noise(self, i: int) -> None:
         # create some random noise values (some might be overridden later)
@@ -321,9 +324,18 @@ class MatrixData:
                         self.bands[k][u][j] = self.band_padding_value
         return
 
-    def get_list_of_block_sizes(self, block_index_array: np.ndarray) -> np.ndarray:
+    def get_block_start_vector(self, block_type: str = "tdata") -> np.ndarray:
+        match block_type:
+            case "noise":
+                return self.noise_blk_starts
+            case "tdata":
+                return self.tdata_blk_starts
+            case _:
+                raise ValueError("Invalid block type (must be 'noise' or 'tdata')")
+
+    def get_list_of_block_sizes(self, block_type: str) -> np.ndarray:
         # based on https://stackoverflow.com/questions/24885092/finding-the-consecutive-zeros-in-a-numpy-array
-        block_index_flat_array: np.ndarray = block_index_array.reshape(self.len * self.dim)
+        block_index_flat_array: np.ndarray = self.get_block_start_vector(block_type).reshape(self.len * self.dim)
         # Create indicator array that is 1 where 'm' is 0 and 1 elsewhere. Pad ends with 0 for n-th diff step.
         is_zero: np.ndarray = np.concatenate(([0], np.equal(block_index_flat_array, 0).view(np.int8), [0]))
         # Calculate the n-th discrete difference (m[i+1] - m[i]) and gather in array.
@@ -371,8 +383,8 @@ if __name__ == "__main__":
         sp1 = data_fig.add_subplot(1, 2, 1)
         sns.heatmap(
             test_data.matrices[selected_index],
-            cmap='rocket',
-            cbar_kws={'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
+            cmap="rocket",
+            cbar_kws={"ticks": [0, 0.2, 0.4, 0.6, 0.8, 1.0]},
             xticklabels=False,
             yticklabels=False,
             square=True,
@@ -383,7 +395,7 @@ if __name__ == "__main__":
         sp2 = data_fig.add_subplot(1, 2, 2)
         sns.heatmap(
             test_data.bands[selected_index],
-            cmap='rocket',
+            cmap="rocket",
             cbar=False,
             xticklabels=False,
             yticklabels=False,
