@@ -39,13 +39,13 @@ the parameters of the generated matrices to find the limits of our models.
 
 ### Task Type
 
-Other (but can be interpreted as a form of image classification)
+Multi-Label Binary Classification
 
 ### Results Summary
 
-- **Best Model:** [Name of the best-performing model]
-- **Evaluation Metric:** [e.g., Accuracy, F1-Score, MSE]
-- **Result:** [e.g., 95% accuracy, F1-score of 0.8]
+- **Best Model:** CNN
+- **Evaluation Metric:** Accuracy, F1
+- **Result:** [95% accuracy, F1-score of 0.73]
 
 ## Documentation
 
