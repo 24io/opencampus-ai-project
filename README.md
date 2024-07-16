@@ -49,7 +49,7 @@ a_{2,1} & a_{2,2} & \cdots & a_{2,n} \\
 a_{m,1} & a_{m,2} & \cdots & a_{m,n} 
 \end{bmatrix}$$
 
-where each $A_{ii}$ is a square block matrix corresponding to the coupling between variables within a single 
+where each `$A_{ii}$` is a square block matrix corresponding to the coupling between variables within a single 
 cell or a small group of cells.
 
 ## Motivation
