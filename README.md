@@ -49,7 +49,7 @@ a_{2,1} & a_{2,2} & \cdots & a_{2,n} \\
 a_{m,1} & a_{m,2} & \cdots & a_{m,n} 
 \end{bmatrix}$$
 
-where each $A_{ii}$ is a square block matrix corresponding to the coupling between variables within a single 
+where each $a_{ii}$ is a square block matrix corresponding to the coupling between variables within a single 
 cell or a small group of cells.
 
 ## Motivation
@@ -76,7 +76,7 @@ A' * x = b'
 ```
 
 If `P` is cleverly chosen then the number iterations for solving this system will be significantly smaller. The goal is 
-thereby to cluster the eigenvalues of \(PA\) around 1 and away from zero, thereby reducing the condition number and improving the convergence rate of the iterative solver
+thereby to cluster the eigenvalues of `PA` around 1 and away from zero, thereby reducing the condition number and improving the convergence rate of the iterative solver
 
 ## Block Jacobi Preconditioner
 The Block Jacobi preconditioner is a natural extension of the classical Jacobi method, tailored to handle the block 
@@ -88,7 +88,7 @@ the inherent parallelism of the block-Jacobi preconditioner allows for efficient
 across multiple processors or nodes in a high-performance computing cluster [^9][^10][^5]. This positions the latter at 
 an advantage for large-scale problems.
 
-The Block Jacobi preconditioner `P` \(P\) can be constructed as:
+The Block Jacobi preconditioner `P` can be constructed as:
 
 $$P = 
 \begin{bmatrix}
@@ -99,25 +99,14 @@ A_{11}^{-1} & 0 & \cdots & 0 \\
 \end{bmatrix}$$
 
 
-where each \(A_{i,i}^{-1}\) represents the inverse of a diagonal block of the original matrix \(A\).
+where each $A_{i,i}^{-1}$ represents the inverse of a diagonal block of the original matrix `A`.
 
-In a parallel implementation, each processor can be assigned one or more blocks, computing the local inverse and applying it to the corresponding part of the vector without needing to communicate with other processors. This locality of computation significantly reduces inter-processor communication overhead, which is often a bottleneck in parallel algorithms. Moreover, the Block Jacobi preconditioner aligns well with domain decomposition strategies commonly used in CFD, where the computational domain is divided into subdomains. Each subdomain can naturally correspond to a block in the preconditioner, preserving the physical and numerical relationships within the local region [^5].
+In a parallel implementation, each processor can be assigned one or more blocks, computing the local inverse and applying it to the corresponding part of the vector without needing to communicate with other processors. 
+This locality of computation significantly reduces inter-processor communication overhead, which is often a bottleneck in parallel algorithms. 
+Moreover, the Block Jacobi preconditioner aligns well with domain decomposition strategies commonly used in CFD, where the computational domain is divided into subdomains. Each subdomain can naturally correspond to a block in the preconditioner, preserving the physical and numerical relationships within the local region [^5].
 
-
-
-A common preconditioner can be a Block-Jacobi-Inverse. Here blocks of variables are identified in the Matrix `A`.
-Only these blocks are inverted which commonly can be done quite fast when their dimensions ar significantly smaller than
-the dimensions of the matrix itself.
-
-The tricky part is identifying the connected blocks in a matrix, especially when noisy blocks not representing true data
-are also present in the matrix.
-
-Since the matrices can be treated as images, this is an ideal job for a convolutional neural network (CNN).
-
-We try to reproduce the model presented in [Götz & Anzt (2018)](
-https://sc18.supercomputing.org/proceedings/workshops/workshop_files/ws_lasalss102s2-file1.pdf) to learn about the
-pitfalls of implementing the data generation, training and fine-tuning the model, and finally experiment with changing
-the parameters of the generated matrices to find the limits of our models.
+Nevertheless, if the source of the equations are unknown, it can become tricky to identify the connected blocks in a matrix, especially when noise blocks are also present. Inspired by the work of [Götz & Anzt (2018)](
+https://sc18.supercomputing.org/proceedings/workshops/workshop_files/ws_lasalss102s2-file1.pdf), we aim to predict the block starts in systems of large, sparse matrices using Machine Learning methods. Therefore, we first reproduce the results presented in their paper[^9] using a CNN, and then build upon their work by comparing different model architectures, such as graph representations. 
 
 ### Task Type
 
@@ -140,3 +129,27 @@ Multi-Label Binary Classification
 ## Cover Image
 
 ![Project Cover Image](CoverImage/cover_image.png)
+
+## References
+
+[^1]: Botsch, M., Bommes, D., & Kobbelt, L. (2005). Efficient Linear System Solvers for Mesh Processing. In Mathematics of Surfaces XI (pp. 62-83). Springer Berlin Heidelberg. [https://doi.org/10.1007/978-3-540-31835-4_4](https://doi.org/10.1007/978-3-540-31835-4_4)
+
+[^2]: Skotniczny, M., Paszyńska, A., Rojas, S., & Paszyński, M. (2024). Complexity of direct and iterative solvers on space–time formulations and time-marching schemes for h-refined grids towards singularities. Journal of Computational Science, 76, 102216. [https://doi.org/10.1016/j.jocs.2024.102216](https://doi.org/10.1016/j.jocs.2024.102216)
+
+[^3]: Langer, U., & Zank, M. (2021). Efficient Direct Space-Time Finite Element Solvers for Parabolic Initial-Boundary Value Problems in Anisotropic Sobolev Spaces. SIAM Journal on Scientific Computing, 43, A2714-A2736. [https://doi.org/10.1137/20M1358128](https://doi.org/10.1137/20M1358128)
+
+[^4]: Knott, G. (2012). Gaussian Elimination and LU-Decomposition.
+
+[^5]: Hoekstra, R. (2022). Parallel Block Jacobi Preconditioned GMRES for Dense Linear Systems (Master's thesis, Eindhoven University of Technology, Department of Mathematics and Computer Science). [https://pure.tue.nl/ws/portalfiles/portal/303534687/Hoekstra_R.pdf](https://pure.tue.nl/ws/portalfiles/portal/303534687/Hoekstra_R.pdf)
+
+[^6]: Embree, M. (1999). How Descriptive are GMRES Convergence Bounds?
+
+[^7]: Eisenträger, S., Atroshchenko, E., & Makvandi, R. (2020). On the condition number of high order finite element methods: Influence of p-refinement and mesh distortion. Computers & Mathematics with Applications, 80(11), 2289-2339. [https://doi.org/10.1016/j.camwa.2020.05.012](https://doi.org/10.1016/j.camwa.2020.05.012)
+
+[^8]: Zhu, Y., & Sameh, A. H. (2016). How to Generate Effective Block Jacobi Preconditioners for Solving Large Sparse Linear Systems. In Advances in Computational Fluid-Structure Interaction and Flow Simulation: New Methods and Challenging Computations (pp. 231-244). Springer International Publishing. [https://doi.org/10.1007/978-3-319-40827-9_18](https://doi.org/10.1007/978-3-319-40827-9_18)
+
+[^9]: Gotz, M., & Anzt, H. (2018). Machine Learning-Aided Numerical Linear Algebra: Convolutional Neural Networks for the Efficient Preconditioner Generation. In 2018 IEEE/ACM 9th Workshop on Latest Advances in Scalable Algorithms for Large-Scale Systems (scalA) (pp. 49-56). [https://doi.org/10.1109/ScalA.2018.00010](https://doi.org/10.1109/ScalA.2018.00010)
+
+[^10]: Ghai, A., Lu, C., & Jiao, X. (2016). A Comparison of Preconditioned Krylov Subspace Methods for Nonsymmetric Linear Systems. Numerical Linear Algebra with Applications, 26. [https://doi.org/10.1002/nla.2215](https://doi.org/10.1002/nla.2215)
+
+
