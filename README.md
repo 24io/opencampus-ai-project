@@ -49,7 +49,7 @@ a_{2,1} & a_{2,2} & \cdots & a_{2,n} \\
 a_{m,1} & a_{m,2} & \cdots & a_{m,n} 
 \end{bmatrix}$$
 
-where each `$A_{ii}$` is a square block matrix corresponding to the coupling between variables within a single 
+where each $A_{ii}$ is a square block matrix corresponding to the coupling between variables within a single 
 cell or a small group of cells.
 
 ## Motivation
@@ -66,9 +66,9 @@ If the matrices are ill-conditioned, however, the number of iterations required 
 error margin can quickly become computationally prohibitive. 
 
 To accelerate the convergence of an iterative solver, a preconditioner matrix `P` can be applied to both sides of the 
-equation, where  ```\(P \approx A^{-1}\)```. Thus, the original system `Ax + b` is transformed into a system 
-\(P(Ax) = Pb\), whereby \(PA\) and \(Pb\) are ideally cheap to compute and have a more favourable eigenvalue 
-distribution than the original matrix \(A\). 
+equation, where  $P \approx A^{-1}$. Thus, the original system `Ax + b` is transformed into a system 
+$PAx = Pb$, whereby `PA` and `Pb` are ideally cheap to compute and have a more favourable eigenvalue 
+distribution than the original matrix `A`. 
 
 We then solve the resulting system:
 ```
