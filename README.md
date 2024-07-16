@@ -18,7 +18,7 @@ the Navier-Stokes equations, a set of PDEs describing the motion of fluid substa
 while elegant in their continuous form, are extremely difficult to solve analytically for all but the simplest
 cases [^4]. To address this challenge, numerical methods such as Finite Volume (FV), Finite Element (FE),
 or Finite Difference (FD) are employed to discretise the continuous domain into a finite number of points or
-cells, allowing for the computation of approximate solutions [^6–8].
+cells, allowing for the computation of approximate solutions [^6][^7][^8].
 
 The discretisation process transforms the continuous fluid flow problem into a large system of algebraic
 equations, which can be represented as a matrix equation of the form:
@@ -38,7 +38,7 @@ as specialised storage formats can be employed to reduce memory requirements, al
 problems than would be feasible
 with dense matrix representations [^1]. 
 
-Due to the multiple variables associated with each grid cell, A often exhibits a block-diagonal structure which
+Due to the multiple variables associated with each grid cell, A often exhibits a blockdiagonal structure which
 can be represented as:
 
 $$A = 
@@ -54,15 +54,15 @@ cell or a small group of cells.
 
 ## Motivation
 
-The complexity of solving the system `Ax = b` directly can be as high as $O(N^{3})$ [^10–13]. For large systems, 
+The complexity of solving the system `Ax = b` directly can be as high as $O(N^{3})$ [^10][^11][^12][^13]. For large systems, 
 this can lead to significant computational costs and limitations in terms of memory usage. 
 
 In (FE and FV) simulations, a common approach is to approximate the solution of the matrices by iteratively refining an 
-initial guess until a predefined convergence criterion is satisfied [^14,15]. For iterative solving 
+initial guess until a predefined convergence criterion is satisfied [^14][^15]. For iterative solving 
 algorithms such as GMRES, each iteration has a complexity of $O(N^{2})$. 
 Hence, depending on the size of the matrix and the number of iterations required, these methods can offer substantial 
 computational savings over direct methods, particularly if the matrices are sparse [^14]. 
-If the matrices are ill-conditioned, however, the number of iterations required to find a solution within an acceptable 
+If the matrices are illconditioned, however, the number of iterations required to find a solution within an acceptable 
 error margin can quickly become computationally prohibitive. 
 
 To accelerate the convergence of an iterative solver, a preconditioner matrix `P` can be applied to both sides of the 
