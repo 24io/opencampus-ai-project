@@ -18,7 +18,7 @@ the Navier-Stokes equations, a set of PDEs describing the motion of fluid substa
 while elegant in their continuous form, are extremely difficult to solve analytically for all but the simplest
 cases [^4]. To address this challenge, numerical methods such as Finite Volume (FV), Finite Element (FE),
 or Finite Difference (FD) are employed to discretise the continuous domain into a finite number of points or
-cells, allowing for the computation of approximate solutions [^6][^7][^8].
+cells, allowing for the computation of approximate solutions [^6] [^7] [^8].
 
 The discretisation process transforms the continuous fluid flow problem into a large system of algebraic
 equations, which can be represented as a matrix equation of the form:
