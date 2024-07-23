@@ -145,4 +145,3 @@ Multi-Label Binary Classification
 
 [^10]: Ghai, A., Lu, C., & Jiao, X. (2016). A Comparison of Preconditioned Krylov Subspace Methods for Nonsymmetric Linear Systems. Numerical Linear Algebra with Applications, 26. [https://doi.org/10.1002/nla.2215](https://doi.org/10.1002/nla.2215)
 
-
