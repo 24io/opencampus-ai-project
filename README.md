@@ -105,8 +105,15 @@ In a parallel implementation, each processor can be assigned one or more blocks,
 This locality of computation significantly reduces inter-processor communication overhead, which is often a bottleneck in parallel algorithms. 
 Moreover, the Block Jacobi preconditioner aligns well with domain decomposition strategies commonly used in CFD, where the computational domain is divided into subdomains. Each subdomain can naturally correspond to a block in the preconditioner, preserving the physical and numerical relationships within the local region [^5].
 
-Nevertheless, if the source of the equations are unknown, it can become tricky to identify the connected blocks in a matrix, especially when noise blocks are also present. Inspired by the work of [Götz & Anzt (2018)](
-https://sc18.supercomputing.org/proceedings/workshops/workshop_files/ws_lasalss102s2-file1.pdf), we aim to predict the block starts in systems of large, sparse matrices using Machine Learning methods. Therefore, we first reproduce the results presented in their paper[^9] using a CNN, and then build upon their work by comparing different model architectures, such as graph representations. 
+
+### Problem Statement
+
+Identifying the related blocks in a matrix can be challenging, particularly when noise blocks are present and the source of the equations is unknown. Building upon the research conducted by [Götz & Anzt (2018)](https://sc18.supercomputing.org/proceedings/workshops/workshop_files/ws_lasalss102s2-file1.pdf), our objective is to boost the convergence of the Generalised Minimal Residual (GMRES) solver, which is commonly used in conjunction with the Block Jacobi preconditioner [Hoekstra2022,BrownBull2020]. The algorithm aims to solve sparse systems of linear equations of the form 'Ax = b', where 'A' is a non-singular 'n x n' matrix, and 'x' and 'b' are vectors of length 'n'. Specifically, GMRES operates by iteratively minimising the residual norm over expanding Krylov subspaces until it became smaller than the predefined convergence criterion. 
+
+Similar to [Gotz2018], we use predictive techniques to determine the location of diagonal blocks inside our sparse matrices. This enables us to rapidly identify and implement the block Jacobi preconditioner. Thus, our initial step involves replicating the findings outlined in their publication using a Convolutional Neural Network (CNN). Subsequently, we extend their research by conducting a comparative analysis of various model designs, encompassing graph representations. The objective is for every matrix to accurately forecast the initiation of each block. Given that a matrix can include several blocks, where each point can either indicate the start of a block or not, we are faced with a multi-label binary classification problem. 
+
+This paper is organised as follows: To begin, we present a comprehensive summary of existing research on the topic. Next, we elucidate our experimental setup as well as some technical details relevant to our work. Subsequently, we proceed to explore each stage of the process methodologically, beginning with data generation and concluding with the modelling process. Finally, we analyse our findings and outline potential avenues for future research. 
+
 
 ### Task Type
 
