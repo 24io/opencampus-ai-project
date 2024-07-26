@@ -2,11 +2,6 @@
 
 # Detection of block structures in Matrix Sparsity Patterns
 
-## Repository Link
-
-[GitHub repo "opencampus-preconditioner-ai-project"](https://github.com/24io/opencampus-preconditioner-ai-project)
-
-
 ## Background
 
 Many real-world phenomena are continuous in nature and characterised by a multitude of variables that
