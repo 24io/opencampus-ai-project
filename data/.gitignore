@@ -3,3 +3,8 @@
 
 # ... except the .gitignore itself
 !.gitignore
+!.datsets
+!.matrices
+!.weights
+!.predictions
+
