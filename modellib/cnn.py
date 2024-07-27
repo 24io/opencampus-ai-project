@@ -1,7 +1,7 @@
 from tensorflow.keras import Model as KerasModel
 from tensorflow.keras import layers
 from tensorflow.keras.regularizers import l2
-
+from tensorflow.keras.initializers import glorot_uniform, lecun_normal
 from modellib.losses import weighted_binary_crossentropy
 
 
