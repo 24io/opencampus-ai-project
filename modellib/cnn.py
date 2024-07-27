@@ -13,23 +13,24 @@ class Baseline(KerasModel):
         # First bottleneck unit
         self.bn1 = layers.BatchNormalization()
         self.activation1 = layers.Activation('selu')
-        self.conv1 = layers.Conv2D(32, kernel_size=(5, 5), padding='same', kernel_regularizer=l2(0.02))
+        self.conv1 = layers.Conv2D(32, kernel_size=(5, 5), padding='same', kernel_initializer='lecun_normal', kernel_regularizer=l2(0.02))
 
         self.bn2 = layers.BatchNormalization()
         self.activation2 = layers.Activation('selu')
-        self.conv2 = layers.Conv2D(128, kernel_size=(3, 3), padding='same', kernel_regularizer=l2(0.02))
+        self.conv2 = layers.Conv2D(128, kernel_size=(3, 3), padding='same', kernel_initializer='lecun_normal', kernel_regularizer=l2(0.02))
 
         # Corner detection
         self.bn3 = layers.BatchNormalization()
         self.padding = layers.ZeroPadding2D(padding=(0, 3))
-        self.conv3 = layers.Conv2D(32, kernel_size=(21, 7), padding='valid', activation='tanh')
-        self.conv4 = layers.Conv2D(128, kernel_size=(1, 3), padding='same', activation='tanh')
+        self.conv3 = layers.Conv2D(32, kernel_size=(21, 7), padding='valid', activation='tanh', kernel_initializer='glorot_uniform')
+        self.conv4 = layers.Conv2D(128, kernel_size=(1, 3), padding='same', activation='tanh', kernel_initializer='glorot_uniform')
 
         # Fully-connected predictor
         self.flat = layers.Flatten()
-        self.classify = layers.Dense(512, activation='sigmoid')
+        self.classify = layers.Dense(512, activation='sigmoid', kernel_initializer='glorot_uniform')
         self.dropout = layers.Dropout(0.1)
-        self.result = layers.Dense(input_shape[1], activation='sigmoid')
+        self.result = layers.Dense(input_shape[1], activation='sigmoid', kernel_initializer='glorot_uniform')
+
 
     def build(self, input_shape):
         super(Baseline, self).build(input_shape)
