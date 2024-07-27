@@ -23,7 +23,7 @@ def evaluate_model(model, test_dataset, class_weights: dict[int, float]):
     predicted_labels = []
 
     for features, labels in test_dataset:
-        # Get model predictions
+        # Get model blockstarts
         outputs = model(features, training=False)
 
         # Compute the loss
@@ -33,7 +33,7 @@ def evaluate_model(model, test_dataset, class_weights: dict[int, float]):
         test_loss += loss.numpy() * features.shape[0]
         num_samples += features.shape[0]
 
-        # Apply threshold to obtain binary predictions
+        # Apply threshold to obtain binary blockstarts
         predicted_labels.extend((outputs.numpy() > 0.5).astype(int))
         true_labels.extend(labels.numpy().astype(int))
 
