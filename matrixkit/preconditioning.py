@@ -1,9 +1,11 @@
 # encoding: utf-8
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 from scipy.linalg import inv, pinv, LinAlgError
 from scipy.sparse.linalg import gmres
-
 from matrixkit import util
 
 
@@ -104,7 +106,8 @@ def solve_with_gmres_monitored(
         preconditioner: np.ndarray = None,
         relative_tolerance: float = 1e-3
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, list]:
-    """Solve a system of linear equations using GMRES with optional preconditioning and monitoring.
+    """
+    Solve a system of linear equations using GMRES with optional preconditioning and monitoring.
 
     This function solves ``Ax = b`` for given right-hand side ``b`` and matrix ``A`` using the Generalized Minimal
     Residual method (GMRES).
@@ -127,32 +130,30 @@ def solve_with_gmres_monitored(
         - If a preconditioner is provided, it is applied as a `left` preconditioner.
         - The function monitors and returns the `residual norms` at each iteration.
     """
-    print(matrix.shape)
     n, m, _ = matrix.shape
     x_solutions = np.zeros_like(b_vector)
     info_array = np.zeros(n, dtype=int)
     iteration_counts = np.zeros(n, dtype=int)
-    all_residuals: list[list[float]] = list[list[float]]()
+    all_residuals: list[list[float]] = []
 
-    def callback(residual_norm: float):  # note: type provided is actually np.float64
+    def callback(residual_norm: float):
         iteration_count[0] += 1
         residuals.append(residual_norm)
 
-    x_vector: np.ndarray = np.zeros_like(b_vector)
     for k in range(n):
         iteration_count = [0]
         residuals: list[float] = []
 
         run_matrix: np.ndarray = matrix[k]
         run_b_vector: np.ndarray = b_vector[k]
-        if preconditioner is not None:  # apply preconditioner, if a preconditioner is provided
+        if preconditioner is not None:
             run_matrix = preconditioner[k] @ matrix[k]
             run_b_vector = preconditioner[k] @ b_vector[k]
 
         x, info = gmres(
             A=run_matrix,
             b=run_b_vector,
-            x0=x_vector[k],
+            x0=np.zeros_like(run_b_vector),
             rtol=relative_tolerance,
             callback=callback,
             callback_type='pr_norm'
@@ -162,16 +163,55 @@ def solve_with_gmres_monitored(
         iteration_counts[k] = iteration_count[0]
         all_residuals.append(residuals)
 
-    # Print summary statistics
-    print("")
-    print(f"{'With preconditioner:' if preconditioner is not None else 'Without preconditioner:'}")
-    print("-" * 80)
-    print(f"  Converged: {np.sum(info_array == 0)} out of {len(info_array)}")
-    print(f"  Average iterations: {np.mean(iteration_counts):.2f}")
-    print("-" * 80)
-    print(f"  iterations: {iteration_counts}")
-
     return x_solutions, info_array, iteration_counts, all_residuals
+
+
+def run_gmres_experiments(input_matrices_list, preconditioners_list, b):
+    results = []
+
+    for input_name, input_matrices in input_matrices_list:
+        for prec_name, preconditioner_source in preconditioners_list:
+            print(f'Solving {input_name} with {prec_name}')
+            x, info, iters, residuals = solve_with_gmres_monitored(input_matrices, b, preconditioner_source)
+
+            converged = np.sum(info == 0)
+            total_systems = len(info)
+            percent_converged = (converged / total_systems) * 100
+
+            results.append({
+                'Matrix Type': input_name,
+                'Preconditioner Type': prec_name,
+                'Converged': converged,
+                'Total Systems': total_systems,
+                'Percent Converged': percent_converged,
+                'Mean Iterations': np.mean(iters),
+                'Median Iterations': np.median(iters),
+                'Max Iterations': np.max(iters),
+                'Min Iterations': np.min(iters)
+            })
+
+    return pd.DataFrame(results)
+
+
+def print_results_table(df):
+    print(df.to_string(index=False))
+
+
+def plot_results(df):
+    plt.figure(figsize=(12, 6))
+    sns.barplot(x='Matrix Type', y='Mean Iterations', hue='Preconditioner Type', data=df)
+    plt.title('Mean Iterations by Matrix Type and Preconditioner')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(x='Matrix Type', y='Percent Converged', hue='Preconditioner Type', data=df)
+    plt.title('Percent Converged by Matrix Type and Preconditioner')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
+
 
 
 if __name__ == "__main__":
