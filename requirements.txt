@@ -1,0 +1,14 @@
+h5py~=3.11.0
+numpy~=1.26.4
+matplotlib~=3.5.3
+scikit-learn~=1.5.1
+pillow~=10.3.0
+jupyter~=1.0.0
+scipy~=1.13.1
+pandas~=2.2.2
+seaborn~=0.13.2
+matrixkit~=0.1.2
+
+# Important to note:
+tensorflow~=2.17.0 # Tensorflow 2.15.0 needed for accessign model weights, only works with python <= 3.9
+keras~=3.4.1 # Keras 2 needed for tensorflow 2.15.0 compatibility
