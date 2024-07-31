@@ -44,7 +44,7 @@ Where:
 - `x` is a length `n` -vector of unknown variables (i.e. velocity, pressure) 
 - `b` is a length `n` -vector of known values (i.e. related to boundary conditions and source terms) 
 
-Each row in the matrix `A`  typically corresponds to an equation for a specific cell in the grid, while the columns
+Each row in the matrix $A$  typically corresponds to an equation for a specific cell in the grid, while the columns
 represent the influence of neighbouring cells. As each cell primarily interacts with its immediate
 neighbours, most entries in this matrix are zero. Sparse matrices are beneficial with regard to computational efficiency, 
 as specialised storage formats can be employed to reduce memory requirements, allowing for the handling of much larger 
@@ -92,18 +92,18 @@ distribution of eigenvalues and high condition numbers [^10],[^14],[^16].
 
 
 
-To accelerate the convergence of an iterative solver, a preconditioner matrix `P` can be applied to both sides of the 
-equation, where  $P \approx A^{-1}$. Thus, the original system `Ax + b` is transformed into a system 
-$PAx = Pb$, whereby `PA` and `Pb` are ideally cheap to compute and have a more favourable eigenvalue 
-distribution than the original matrix `A` [^14]. 
+To accelerate the convergence of an iterative solver, a preconditioner matrix $P$ can be applied to both sides of the 
+equation, where  $P \approx A^{-1}$. Thus, the original system $Ax + b$ is transformed into a system 
+$PAx = Pb$, whereby $PA$ and $Pb$ are ideally cheap to compute and have a more favourable eigenvalue 
+distribution than the original matrix $A$ [^14]. 
 
 We then solve the resulting system:
 ```
 A' * x = b'
 ```
 
-If `P` is cleverly chosen then the number iterations for solving this system will be significantly smaller. The goal is 
-thereby to cluster the eigenvalues of `PA` around 1 and away from zero, thereby reducing the condition number and 
+If $P$ is cleverly chosen then the number iterations for solving this system will be significantly smaller. The goal is 
+thereby to cluster the eigenvalues of $PA$ around 1 and away from zero, thereby reducing the condition number and 
 improving the convergence rate of the iterative solver [^14]. 
 
 ## Block Jacobi Preconditioner
@@ -116,7 +116,7 @@ the inherent parallelism of the block-Jacobi preconditioner allows for efficient
 workload across multiple processors or nodes in a high-performance computing cluster [^14],[^18],[^19]. 
 This positions the latter at an advantage for large-scale problems. 
 
-The Block Jacobi preconditioner `P` can be constructed as:
+The Block Jacobi preconditioner $P$ can be constructed as:
 
 $$P = 
 \begin{bmatrix}
@@ -127,7 +127,7 @@ A_{11}^{-1} & 0 & \cdots & 0 \\
 \end{bmatrix}$$
 
 
-where each $A_{i,i}^{-1}$ represents the inverse of a diagonal block of the original matrix `A`.
+where each $A_{i,i}^{-1}$ represents the inverse of a diagonal block of the original matrix $A$.
 
 In a parallel implementation, each processor can be assigned one or more blocks, computing the 
 local inverse and applying it to the corresponding part of the vector without needing to communicate
@@ -273,7 +273,7 @@ information from different representation subspaces. The attention mechanism is 
 
 $e_ij = LeakyReLU(a^T [W h_i || W h_j])$
 
-where `a ∈ R^{2d x 1}` is the attention kernel, `W ∈ R^{f x d}` is the weight matrix, and `h_i`, `h_j` are the feature vectors of nodes `i` and `j`[^31]. The concatenation of `W h_i` and `W h_j` (denoted by `||`) represents the combined feature representation of node pair `(i, j)`. The resulting score `e_ij` indicates the importance of node `j`'s features to node `i`. The attention coefficients are then normalised using the softmax function:
+where $a ∈ R^{2d x 1}$ is the attention kernel, $W ∈ R^{f x d}$ is the weight matrix, and $h_i$, $h_j$ are the feature vectors of nodes $i$ and $j$[^31]. The concatenation of $W h_i$ and $W h_j$ (denoted by $||$) represents the combined feature representation of node pair $(i, j)$. The resulting score $e_ij$ indicates the importance of node $j$'s features to node $i$. The attention coefficients are then normalised using the softmax function:
 
 
 \[
