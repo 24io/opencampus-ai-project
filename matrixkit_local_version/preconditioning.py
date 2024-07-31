@@ -4,7 +4,7 @@ import numpy as np
 from scipy.linalg import inv, pinv, LinAlgError
 from scipy.sparse.linalg import gmres
 
-from matrixlib import util
+from matrixkit_local_version import util
 
 
 def generate_block_jacobi_preconditioner(
