@@ -65,9 +65,9 @@ $$
 
 <br>
 
-where each \(B_{ii}\) is a square block matrix corresponding to the 
+where each \(B_{ii}$ is a square block matrix corresponding to the 
 coupling between variables within a single cell or a small group of cells,
-while the remaining \(A_{ij}\) are sparse.
+while the remaining \(A_{ij}$ are sparse.
 
 
 
@@ -75,7 +75,7 @@ while the remaining \(A_{ij}\) are sparse.
 
 Although much research goes into optimising existing algorithms to solve systems of linear equations efficiently, 
 the complexity of direct solving methods, i.e., Gaussian elimination or LU factorisation, 
-can be as high as \(O(N^{3})\) [^10],[^11],[^12],[^13]. 
+can be as high as \(O(N^{3})$ [^10],[^11],[^12],[^13]. 
 For large systems, this can lead to significant computational costs and limitations in terms of memory usage. 
 In FE and FV simulations, a common approach is to approximate the solution of the matrices by iteratively refining 
 an initial guess until a predefined convergence criterion is satisfied [^14],[^15]. 
@@ -145,7 +145,7 @@ apparent due to ordering issues or noise elements, making the identification of 
 Building on the work of Götz et al. (2018) [^18], our goal is therefore to forecast diagonal block locations in a 
 collection of large sparse matrices in order to efficiently build Block-Jacobi preconditioners and ultimately 
 improve the convergence of the Generalised Minimal Residual (GMRES) solver. The GMRES solver is frequently
-employed in conjunction with the Block-Jacobi preconditioner[^14],[^20] and aims to solve sparse systems of linear equations of the form \(Ax = b\), where $A$ is a non-singular \(n \times n\) matrix, and \(x\) and \(b\) are vectors of length \(n\). Specifically, GMRES operates by iteratively minimising the residual norm over expanding Krylov subspaces until it falls below the predefined convergence threshold.
+employed in conjunction with the Block-Jacobi preconditioner[^14],[^20] and aims to solve sparse systems of linear equations of the form $Ax = b$, where $A$ is a non-singular $n \times n$ matrix, and $x$ and $b$ are vectors of length $n$. Specifically, GMRES operates by iteratively minimising the residual norm over expanding Krylov subspaces until it falls below the predefined convergence threshold.
 
 Similar to [^18], we use predictive techniques to determine the location of diagonal blocks inside 
 our sparse matrices. This enables us to rapidly identify and implement the Block-Jacobi preconditioner. 
@@ -180,8 +180,8 @@ These approaches offer different trade-offs between accuracy, speed, and applica
 
 Striking a balance between the advantages of ML and the need for numerical accuracy, [^25] formulated the task of 
 finding an effective preconditioner as an unsupervised learning problem. The authors employed a CNN to learn a
-function \(f\) that maps an input matrix $A$ to a preconditioner \(M^{-1}\). The learning process involves 
-minimising the condition number of the preconditioned system \(AM^{-1}\) across a training set of sparse 
+function $f$ that maps an input matrix $A$ to a preconditioner $M^{-1}$. The learning process involves 
+minimising the condition number of the preconditioned system $AM^{-1}$ across a training set of sparse 
 Symmetric Positive Definite (SPD) matrices. The model receives the lower triangular component and diagonal 
 of the system matrix $A$ as input and transforms them to create an SPD preconditioner. 
 This approach of using a CNN-generated preconditioner alongside the traditional Conjugate 
@@ -244,12 +244,12 @@ During training, the model tries to minimise the loss function. Since we are dea
 
 ### Model Architecture
 
-Our Graph Convolutional Network (GCN) model is designed to capture the structural relationships within the input data. The architecture consists of several key components: graph convolution layers, graph attention layers, and a combination of residual connections and dense layers for feature extraction and prediction. The model takes two inputs: a feature matrix \(X \in \mathbb{R}^{n \times f}\), where \(n\) is the number of nodes and \(f\) is the number of features per node, and an adjacency matrix \(A \in \mathbb{R}^{n \times n}\) representing the graph structure. To maintain consistency with the CNN, we only consider the matrix bands and not the full matrices. Hence, in our specific case:
+Our Graph Convolutional Network (GCN) model is designed to capture the structural relationships within the input data. The architecture consists of several key components: graph convolution layers, graph attention layers, and a combination of residual connections and dense layers for feature extraction and prediction. The model takes two inputs: a feature matrix $X \in \mathbb{R}^{n \times f}$, where $n$ is the number of nodes and $f$ is the number of features per node, and an adjacency matrix $A \in \mathbb{R}^{n \times n}$ representing the graph structure. To maintain consistency with the CNN, we only consider the matrix bands and not the full matrices. Hence, in our specific case:
 
-- Number of nodes (\(n\)) = 64 (corresponding to the columns of the original matrix)
-- Number of features per node (\(f\)) = 21 (corresponding to the rows in the band).
+- Number of nodes ($n$) = 64 (corresponding to the columns of the original matrix)
+- Number of features per node ($f$) = 21 (corresponding to the rows in the band).
 
-This results in a feature matrix \(X \in \mathbb{R}^{64 \times 21}\) and an adjacency matrix \(A \in \mathbb{R}^{64 \times 64}\). The model can be configured to use either graph attention or standard graph convolution, which are explained below.
+This results in a feature matrix $X \in \mathbb{R}^{64 \times 21}$ and an adjacency matrix $A \in \mathbb{R}^{64 \times 64}$. The model can be configured to use either graph attention or standard graph convolution, which are explained below.
 
 #### Graph Convolution Layer
 
@@ -259,9 +259,9 @@ The graph convolution layer is implemented as a custom layer that performs the f
 H = \sigma(A X W + \beta)
 \]
 
-where \(\sigma\) is an activation function (e.g., ReLU), \(W \in \mathbb{R}^{f \times d}\) is the learnable weight 
-matrix (with \(d\) being the number of output features), and \(\beta \in \mathbb{R}^{d}\) is the bias term [^30].
-The layer applies the weight matrix \(W\) to transform the node features \(X\), then 
+where $\sigma$ is an activation function (e.g., ReLU), $W \in \mathbb{R}^{f \times d}$ is the learnable weight 
+matrix (with $d$ being the number of output features), and $\beta \in \mathbb{R}^{d}$ is the bias term [^30].
+The layer applies the weight matrix $W$ to transform the node features $X$, then 
 aggregates the features using the adjacency matrix $A$, capturing information from neighbouring nodes. 
 For a more detailed description of convolutions on graphs, please refer to [^30]. L2 regularisation is applied to the weights to prevent overfitting, ensuring that the model generalises well to unseen data.
 
@@ -280,11 +280,11 @@ where $a ∈ R^{2d x 1}$ is the attention kernel, $W ∈ R^{f x d}$ is the weigh
 \alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})} 
 \]
 
-where \(\mathcal{N}(i)\) denotes the set of neighbouring nodes of node \(i\) [^31]. The normalised attention coefficients \(\alpha_{ij}\) are used to compute a weighted sum of the node features, effectively allowing the model to focus on the most relevant parts of the graph.
+where $\mathcal{N}(i)$ denotes the set of neighbouring nodes of node $i$ [^31]. The normalised attention coefficients $\alpha_{ij}$ are used to compute a weighted sum of the node features, effectively allowing the model to focus on the most relevant parts of the graph.
 
 #### Residual Connections
 
-We also added residual connections, introduced by [^32], which are designed to facilitate the training of deep NNs by alleviating the vanishing gradient problem and improving gradient flow. These connections, also known as "shortcut connections" or "skip connections," enable the model to learn a residual function \(F(x)\)—which is essentially the difference between the desired output \(H(x)\) and the input \(x\)—rather than learning the entire mapping function \(H(x)\) from scratch. In practice, this means that the output from one layer is directly added to the output of a later layer, bypassing one or more intermediate layers. This bypassed output (i.e., the original input that skips the intermediate layers) is then added to the output of the subsequent layers instead of replacing them. This mechanism helps to preserve the original information while allowing the model to learn more complex features. In our GCN model, these residual connections specifically help maintain the fidelity of the original input features while allowing the network to learn increasingly abstract representations, which is particularly important for capturing both local and global structural information in the sparse matrices.
+We also added residual connections, introduced by [^32], which are designed to facilitate the training of deep NNs by alleviating the vanishing gradient problem and improving gradient flow. These connections, also known as "shortcut connections" or "skip connections," enable the model to learn a residual function $F(x)$—which is essentially the difference between the desired output $H(x)$ and the input $x$—rather than learning the entire mapping function $H(x)$ from scratch. In practice, this means that the output from one layer is directly added to the output of a later layer, bypassing one or more intermediate layers. This bypassed output (i.e., the original input that skips the intermediate layers) is then added to the output of the subsequent layers instead of replacing them. This mechanism helps to preserve the original information while allowing the model to learn more complex features. In our GCN model, these residual connections specifically help maintain the fidelity of the original input features while allowing the network to learn increasingly abstract representations, which is particularly important for capturing both local and global structural information in the sparse matrices.
 
 #### Initialisation and Regularisation
 
@@ -292,7 +292,7 @@ We use Xavier uniform initialisation for the weight matrices and zero initialisa
 
 #### Output Layer
 
-The final output layer is a dense layer with a sigmoid activation function, producing a binary classification output for each node. The output labels indicate whether each column in the matrix corresponds to the start of a block, with the final output being reshaped to match the desired output shape of \((\text{batch\_size}, 64)\).
+The final output layer is a dense layer with a sigmoid activation function, producing a binary classification output for each node. The output labels indicate whether each column in the matrix corresponds to the start of a block, with the final output being reshaped to match the desired output shape of $(\text{batch\_size}, 64)$.
 
 
 # Model Performance Evaluation
