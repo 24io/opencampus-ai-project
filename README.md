@@ -3,10 +3,16 @@
 # Detection of block structures in Matrix Sparsity Patterns
 
 ## TL;DR:
+We use machine learning to predict the block structures in sparse matrices, 
+which are then used to construct Block-Jacobi preconditioners for accelerating the convergence of 
+iterative solvers. Our models, a Convolutional Neural Network (CNN) and a Graph Convolutional Network
+(GCN), outperform traditional methods for block detection. The CNN achieves an accuracy of 95% and an F1-score of 0.73. 
+The GMRES convergence was improved by 100x using the predicted block structures.
 ### Results Summary
 - **Best Model:** CNN
 - **Evaluation Metric:** Accuracy, F1
 - **Result:** [95% accuracy, F1-score of 0.73]
+- **Impact:** Improved GMRES convergence by 100x (from 2,567 to 262 iterations on average)
 
 ## Background
 ### Computational Fluid Dynamics
@@ -21,7 +27,8 @@ In CFD, the continuous flow of fluids is modelled using the Navier-Stokes equati
 a set of PDEs describing the motion of fluid substances [^3]. 
 These equations, while elegant in their continuous form, 
 are extremely difficult to solve analytically for all but the simplest cases [^4] 
-The analytical solution of the Navier-Stokes equations in three dimensions is one of the Millennium Prize Problems in mathematics [^ClayMathNavierStokes}}. 
+The analytical solution of the Navier-Stokes equations in three dimensions is one of the Millennium
+Prize Problems in mathematics [^5]. 
 To address this challenge, numerical methods such as Finite Volume (FV), Finite Element (FE), 
 or Finite Difference (FD) are employed to discretise the continuous domain into a finite number of points or cells, 
 allowing for the computation of approximate solutions [^6],[^7],[^8]. 
@@ -44,7 +51,7 @@ as specialised storage formats can be employed to reduce memory requirements, al
 problems than would be feasible
 with dense matrix representations [^1]. 
 
-Due to the multiple variables associated with each grid cell, \(A\) often exhibits a block-diagonal structure which can be represented as:
+Due to the multiple variables associated with each grid cell, $A$ often exhibits a block-diagonal structure which can be represented as:
 
 $$
 A = 
@@ -104,7 +111,7 @@ The Block-Jacobi preconditioner is a natural extension of the classical Jacobi m
 tailored to handle the block structure often encountered in CFD problems [^14]. 
 It is particularly well-suited for systems where variables are tightly coupled within local regions but less so 
 across the entire domain. Although more sophisticated preconditioners like Incomplete LU factorisation (ILU) or 
-Algebraic Multigrid (AMG) outperform Jacobian methods with regard to their effectiveness [^Zhu2016},
+Algebraic Multigrid (AMG) outperform Jacobian methods with regard to their effectiveness [^17],
 the inherent parallelism of the block-Jacobi preconditioner allows for efficient distribution of computational 
 workload across multiple processors or nodes in a high-performance computing cluster [^14],[^18],[^19]. 
 This positions the latter at an advantage for large-scale problems. 
@@ -138,7 +145,7 @@ apparent due to ordering issues or noise elements, making the identification of 
 Building on the work of Götz et al. (2018) [^18], our goal is therefore to forecast diagonal block locations in a 
 collection of large sparse matrices in order to efficiently build Block-Jacobi preconditioners and ultimately 
 improve the convergence of the Generalised Minimal Residual (GMRES) solver. The GMRES solver is frequently
-employed in conjunction with the Block-Jacobi preconditioner[^14],[^20] and aims to solve sparse systems of linear equations of the form \(Ax = b\), where \(A\) is a non-singular \(n \times n\) matrix, and \(x\) and \(b\) are vectors of length \(n\). Specifically, GMRES operates by iteratively minimising the residual norm over expanding Krylov subspaces until it falls below the predefined convergence threshold.
+employed in conjunction with the Block-Jacobi preconditioner[^14],[^20] and aims to solve sparse systems of linear equations of the form \(Ax = b\), where $A$ is a non-singular \(n \times n\) matrix, and \(x\) and \(b\) are vectors of length \(n\). Specifically, GMRES operates by iteratively minimising the residual norm over expanding Krylov subspaces until it falls below the predefined convergence threshold.
 
 Similar to [^18], we use predictive techniques to determine the location of diagonal blocks inside 
 our sparse matrices. This enables us to rapidly identify and implement the Block-Jacobi preconditioner. 
@@ -173,10 +180,10 @@ These approaches offer different trade-offs between accuracy, speed, and applica
 
 Striking a balance between the advantages of ML and the need for numerical accuracy, [^25] formulated the task of 
 finding an effective preconditioner as an unsupervised learning problem. The authors employed a CNN to learn a
-function \(f\) that maps an input matrix \(A\) to a preconditioner \(M^{-1}\). The learning process involves 
+function \(f\) that maps an input matrix $A$ to a preconditioner \(M^{-1}\). The learning process involves 
 minimising the condition number of the preconditioned system \(AM^{-1}\) across a training set of sparse 
 Symmetric Positive Definite (SPD) matrices. The model receives the lower triangular component and diagonal 
-of the system matrix \(A\) as input and transforms them to create an SPD preconditioner. 
+of the system matrix $A$ as input and transforms them to create an SPD preconditioner. 
 This approach of using a CNN-generated preconditioner alongside the traditional Conjugate 
 Gradient algorithm works effectively for a variety of applications, including solving the 
 Pressure Poisson Equation (PPE) in CFD, while guaranteeing a certain level of numerical accuracy [^25]. Nevertheless, the computational cost of calculating condition numbers during training may limit its performance advantage.
@@ -255,7 +262,7 @@ H = \sigma(A X W + \beta)
 where \(\sigma\) is an activation function (e.g., ReLU), \(W \in \mathbb{R}^{f \times d}\) is the learnable weight 
 matrix (with \(d\) being the number of output features), and \(\beta \in \mathbb{R}^{d}\) is the bias term [^30].
 The layer applies the weight matrix \(W\) to transform the node features \(X\), then 
-aggregates the features using the adjacency matrix \(A\), capturing information from neighbouring nodes. 
+aggregates the features using the adjacency matrix $A$, capturing information from neighbouring nodes. 
 For a more detailed description of convolutions on graphs, please refer to [^30]. L2 regularisation is applied to the weights to prevent overfitting, ensuring that the model generalises well to unseen data.
 
 #### Graph Attention Layer
@@ -264,12 +271,10 @@ To enhance the model's ability to focus on important parts of the graph, we impl
 mechanism (GraphAttention). This layer uses multi-head attention, allowing the model to jointly attend to 
 information from different representation subspaces. The attention mechanism is defined as:
 
-\[
-e_{ij} = \text{LeakyReLU }(a^T[W h_i || W h_j]) 
-\]
+$e_ij = LeakyReLU(a^T [W h_i || W h_j])$
 
-where \(a \in \mathbb{R}^{2d \times 1}\) is the attention kernel, \(W \in \mathbb{R}^{f \times d}\) is the 
-weight matrix, and \(h_i\), \(h_j\) are the feature vectors of nodes \(i\) and \(j\) [^31]. The concatenation of \(W h_i\) and \(W h_j\) (denoted by \(||\)) represents the combined feature representation of node pair \((i, j)\). The resulting score \(e_{ij}\) indicates the importance of node \(j\)'s features to node \(i\). The attention coefficients are then normalised using the softmax function:
+where `a ∈ R^{2d x 1}` is the attention kernel, `W ∈ R^{f x d}` is the weight matrix, and `h_i`, `h_j` are the feature vectors of nodes `i` and `j`[^31]. The concatenation of `W h_i` and `W h_j` (denoted by `||`) represents the combined feature representation of node pair `(i, j)`. The resulting score `e_ij` indicates the importance of node `j`'s features to node `i`. The attention coefficients are then normalised using the softmax function:
+
 
 \[
 \alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})} 
@@ -296,14 +301,13 @@ For evaluation, we calculate the weighted binary cross-entropy loss of the test 
 
 The models' performance is evaluated using confusion matrix metrics, yielding 1408 true positives, 563 false negatives, 16776 true negatives, and 453 false positives for our best model, the CNN. This translates into an overall accuracy score of 0.947 and an F1-Score of 0.73 for the block starts. These metrics can be calculated as follows:
 
-$ \text{Accuracy} = \frac{\text{TP} + \text{TN}}{\text{TP} + \text{TN} + \text{FP} + \text{FN}} = \frac{1408 + 16776}{1408 + 16776 + 453 + 563} \approx .947 $
+**Accuracy** = (TP + TN) / (TP + TN + FP + FN) = (1408 + 16776) / (1408 + 16776 + 453 + 563) ≈ .947
 
-$ \text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}} = \frac{1408}{1408 + 453} \approx .757 $
+**Precision** = TP / (TP + FP) = 1408 / (1408 + 453) ≈ .757
 
-$ \text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}} = \frac{1408}{1408 + 563} \approx .714 $
+**Recall** = TP / (TP + FN) = 1408 / (1408 + 563) ≈ .714
 
-$ \text{F1-Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} \approx .73 $
-
+**F1-Score** = 2 × (Precision × Recall) / (Precision + Recall) ≈ .73
 
 
 While the accuracy score is high (0.947), it can be misleading in the context of imbalanced datasets, which is the case in our block structure detection task. With less than ten percent of the values representing block starts, a model could achieve high accuracy simply by predicting the majority class (no block start) most of the time, while performing poorly on the minority class of interest (block start). The F1-score provides a more balanced measure of the model's performance, especially for the minority class. It is the harmonic mean of precision and recall, giving equal weight to both metrics. Precision measures the accuracy of positive predictions, while recall measures the model's ability to find all positive instances. By combining these, the F1-score provides a single score that balances both the precision and recall of the model.
