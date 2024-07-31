@@ -258,9 +258,7 @@ This results in a feature matrix $X \in \mathbb{R}^{64 \times 21}$ and an adjace
 
 The graph convolution layer is implemented as a custom layer that performs the following operation:
 
-$
-H = \sigma(A X W + \beta)
-$
+$H = \sigma(A X W + \beta)$
 
 where $\sigma$ is an activation function (e.g., ReLU), $W \in \mathbb{R}^{f \times d}$ is the learnable weight 
 matrix (with $d$ being the number of output features), and $\beta \in \mathbb{R}^{d}$ is the bias term [^30].
@@ -280,9 +278,7 @@ where $a ∈ R^{2d x 1}$ is the attention kernel, $W ∈ R^{f x d}$ is the weigh
 The attention coefficients are then normalised using the softmax function:
 
 
-$
-\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})} 
-$
+$\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})}$
 
 where $\mathcal{N}(i)$ denotes the set of neighbouring nodes of node $i$ [^31]. The normalised attention coefficients $\alpha_{ij}$ are used to compute a weighted sum of the node features, effectively allowing the model to focus on the most relevant parts of the graph.
 
