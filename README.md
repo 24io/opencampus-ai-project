@@ -297,20 +297,21 @@ For evaluation, we calculate the weighted binary cross-entropy loss of the test 
 The models' performance is evaluated using confusion matrix metrics, yielding 1408 true positives, 563 false negatives, 16776 true negatives, and 453 false positives for our best model, the CNN. This translates into an overall accuracy score of 0.947 and an F1-Score of 0.73 for the block starts. These metrics can be calculated as follows:
 
 \[
-\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN} = \frac{1408 + 16776}{1408 + 16776 + 453 + 563} \approx 0.947
+\text{Accuracy} = \frac{\text{TP} + \text{TN}}{\text{TP} + \text{TN} + \text{FP} + \text{FN}} = \frac{1408 + 16776}{1408 + 16776 + 453 + 563} \approx .947
 \]
 
 \[
-\text{Precision} = \frac{TP}{TP + FP} = \frac{1408}{1408 + 453} \approx 0.757 
+\text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}} = \frac{1408}{1408 + 453} \approx .757 
 \]
 
 \[
-\text{Recall} = \frac{TP}{TP + FN} = \frac{1408}{1408 + 563} \approx 0.714 
+\text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}} = \frac{1408}{1408 + 563} \approx .714 
 \]
 
 \[
-\text{F1-Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} \approx 0.73
+\text{F1-Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} \approx .73
 \]
+
 
 While the accuracy score is high (0.947), it can be misleading in the context of imbalanced datasets, which is the case in our block structure detection task. With less than ten percent of the values representing block starts, a model could achieve high accuracy simply by predicting the majority class (no block start) most of the time, while performing poorly on the minority class of interest (block start). The F1-score provides a more balanced measure of the model's performance, especially for the minority class. It is the harmonic mean of precision and recall, giving equal weight to both metrics. Precision measures the accuracy of positive predictions, while recall measures the model's ability to find all positive instances. By combining these, the F1-score provides a single score that balances both the precision and recall of the model.
 
@@ -325,11 +326,11 @@ proposed by [^26]. Therefore, the algorithm described in their paper was impleme
 | GCN   | 0.8837   | 356 | 561 | 10955 | 928 | 0.39      | 0.28   | 0.32     |
 | SVB   | 0.8475   | 66  | 734 | 10782 | 1218| 0.08      | 0.05   | 0.06     |
 
-*Table: Performance comparison of block start detection methods.*
+*Table 1: Performance comparison of block start detection methods.*
 
 # GMRES Convergence Comparison
 
-Table 1 shows the results from the different GMRES experiment runs. On average, the systems converged after 2,567 iterations when used without a preconditioner, and after 263 iterations when used with Block-Jacobi preconditioners created from the true labels. This is a speed-up of approximately 100x. As anticipated, the convergence improvement is smaller when using a preconditioner constructed from the predicted block starts, which we explain by the deviation of the predictions from the true block starts. Correspondingly, the performance is further affected when creating the preconditioner using the GCN or the SVB technique, although there is still an improvement regarding the average required iteration counts compared to not using a preconditioner at all. It should be noted that there is a significant difference between the mean and median iterations, which is explained by the presence of ill-conditioned matrices in the dataset (outliers) that converged very slowly.
+Table 2 shows the results from the different GMRES experiment runs. On average, the systems converged after 2,567 iterations when used without a preconditioner, and after 263 iterations when used with Block-Jacobi preconditioners created from the true labels. This is a speed-up of approximately 100x. As anticipated, the convergence improvement is smaller when using a preconditioner constructed from the predicted block starts, which we explain by the deviation of the predictions from the true block starts. Correspondingly, the performance is further affected when creating the preconditioner using the GCN or the SVB technique, although there is still an improvement regarding the average required iteration counts compared to not using a preconditioner at all. It should be noted that there is a significant difference between the mean and median iterations, which is explained by the presence of ill-conditioned matrices in the dataset (outliers) that converged very slowly.
 
 | Preconditioner Type                       | Convergence (#/%) | Mean Iterations | Median Iterations | Max Iterations | Min Iterations |
 |-------------------------------------------|-------------------|-----------------|-------------------|----------------|----------------|
@@ -339,7 +340,7 @@ Table 1 shows the results from the different GMRES experiment runs. On average, 
 | Preconditioner from Supervariable Blocking | 180/200 (90.0%)   | 368.43          | 119.5             | 5,740          | 19             |
 | Preconditioner from GCN Predictions       | 176/200 (88.0%)   | 271.42          | 109.5             | 3,756          | 16             |
 
-*Table 1: Performance comparison of different preconditioners on original (unprocessed) matrices.*
+*Table 2: Performance comparison of different preconditioners on original (unprocessed) matrices.*
 
 # Conclusion
 
