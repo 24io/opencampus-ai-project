@@ -99,8 +99,8 @@ def create_gcn_model(num_nodes, num_features, use_attention=True):
         combined = layers.Concatenate()([layer2, residual])
 
         # Apply dense layers to reduce dimensionality
-        dense1 = layers.TimeDistributed(layers.Dense(32, activation='relu'))(combined)
-        dense2 = layers.TimeDistributed(layers.Dense(16, activation='relu'))(dense1)
+        dense1 = layers.Dense(32, activation='relu')(combined)
+        dense2 = layers.Dense(16, activation='relu')(dense1)
     else:
         # GraphConv branch
         layer1 = GraphConv(32, activation='relu')([x_input, a_input])
@@ -109,7 +109,7 @@ def create_gcn_model(num_nodes, num_features, use_attention=True):
         dense2 = layers.Add()([layer2, residual])
 
     # Output layer for multi-label binary classification
-    output = layers.TimeDistributed(layers.Dense(1, activation='sigmoid'))(dense2)
+    output = layers.Dense(1, activation='sigmoid')(dense2)
     output = layers.Reshape((num_nodes,))(output)
 
     model = Model(inputs=[x_input, a_input], outputs=output)
