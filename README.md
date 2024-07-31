@@ -14,6 +14,8 @@ The GMRES convergence was improved by 100x using the predicted block structures.
 - **Result:** [95% accuracy, F1-score of 0.73]
 - **Impact:** Improved GMRES convergence by 100x (from 2,567 to 262 iterations on average)
 
+The full paper is available [here](https://github.com/24io/opencampus-preconditioner-ai-project/blob/main/paper).
+
 ## Background
 ### Computational Fluid Dynamics
 
@@ -80,7 +82,7 @@ For large systems, this can lead to significant computational costs and limitati
 In FE and FV simulations, a common approach is to approximate the solution of the matrices by iteratively refining 
 an initial guess until a predefined convergence criterion is satisfied [^14],[^15]. 
 For iterative solving algorithms such as GMRES, which is introduced in Section 3, 
-each iteration has a complexity of $O(N^{2}$. 
+each iteration has a complexity of $O(N^{2})$. 
 Hence, depending on the size of the matrix and the number of iterations required, 
 these methods can offer substantial computational savings over direct methods, particularly 
 if the matrices are sparse [^14]. If the matrices are ill-conditioned, however, 
@@ -93,7 +95,7 @@ distribution of eigenvalues and high condition numbers [^10],[^14],[^16].
 
 
 To accelerate the convergence of an iterative solver, a preconditioner matrix $P$ can be applied to both sides of the 
-equation, where  $P \approx A^{-1}$. Thus, the original system $Ax + b$ is transformed into a system 
+equation, where  $P ≈ A^{-1}$. Thus, the original system $Ax + b$ is transformed into a system 
 $PAx = Pb$, whereby $PA$ and $Pb$ are ideally cheap to compute and have a more favourable eigenvalue 
 distribution than the original matrix $A$ [^14]. 
 
@@ -227,7 +229,8 @@ We trained a CNN with a similar architecture to [^18] to predict the block start
 #### Weight Initialisation and Regularisation
 
 In addition to the architecture proposed by [^18], we also implemented different weight 
-initialisation techniques to maintain constant variance of activations: Xavier weight initialisation [^28] was employed across the layers with tanh or sigmoid activations, and LeCun initialisation was used for layers with SELU activation. Weight initialisation ensures that input variance $\approx $ output variance, contributing to the model's stability and quick convergence. The figure below displays the (simplified) architecture of the model.
+initialisation techniques to maintain constant variance of activations: Xavier weight initialisation [^28] was employed across the layers with tanh or sigmoid activations, and LeCun initialisation was used for layers with SELU activation. Weight initialisation ensures that 
+input variance ≈ output variance, contributing to the model's stability and quick convergence. The figure below displays the (simplified) architecture of the model.
 
 ![CNN Architecture](cnn_architecture.pdf)
 
