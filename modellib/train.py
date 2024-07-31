@@ -70,4 +70,3 @@ def plot_losses(train_losses, val_losses):
     plt.grid(True)
     plt.show()
 
-# TODO: Add Weight Initialisation (Xavier)
