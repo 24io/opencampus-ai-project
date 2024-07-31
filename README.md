@@ -296,21 +296,14 @@ For evaluation, we calculate the weighted binary cross-entropy loss of the test 
 
 The models' performance is evaluated using confusion matrix metrics, yielding 1408 true positives, 563 false negatives, 16776 true negatives, and 453 false positives for our best model, the CNN. This translates into an overall accuracy score of 0.947 and an F1-Score of 0.73 for the block starts. These metrics can be calculated as follows:
 
-\[
-\text{Accuracy} = \frac{\text{TP} + \text{TN}}{\text{TP} + \text{TN} + \text{FP} + \text{FN}} = \frac{1408 + 16776}{1408 + 16776 + 453 + 563} \approx .947
-\]
+$ \text{Accuracy} = \frac{\text{TP} + \text{TN}}{\text{TP} + \text{TN} + \text{FP} + \text{FN}} = \frac{1408 + 16776}{1408 + 16776 + 453 + 563} \approx .947 $
 
-\[
-\text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}} = \frac{1408}{1408 + 453} \approx .757 
-\]
+$ \text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}} = \frac{1408}{1408 + 453} \approx .757 $
 
-\[
-\text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}} = \frac{1408}{1408 + 563} \approx .714 
-\]
+$ \text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}} = \frac{1408}{1408 + 563} \approx .714 $
 
-\[
-\text{F1-Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} \approx .73
-\]
+$ \text{F1-Score} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} \approx .73 $
+
 
 
 While the accuracy score is high (0.947), it can be misleading in the context of imbalanced datasets, which is the case in our block structure detection task. With less than ten percent of the values representing block starts, a model could achieve high accuracy simply by predicting the majority class (no block start) most of the time, while performing poorly on the minority class of interest (block start). The F1-score provides a more balanced measure of the model's performance, especially for the minority class. It is the harmonic mean of precision and recall, giving equal weight to both metrics. Precision measures the accuracy of positive predictions, while recall measures the model's ability to find all positive instances. By combining these, the F1-score provides a single score that balances both the precision and recall of the model.
