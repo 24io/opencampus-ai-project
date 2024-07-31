@@ -295,7 +295,7 @@ We use Xavier uniform initialisation for the weight matrices and zero initialisa
 The final output layer is a dense layer with a sigmoid activation function, 
 producing a binary classification output for each node. 
 The output labels indicate whether each column in the matrix corresponds to the start of a block, 
-with the final output being reshaped to match the desired output shape of $(batch_size, 64)$.
+with the final output being reshaped to match the desired output shape of $($batch_size, $64)$.
 
 
 # Model Performance Evaluation
