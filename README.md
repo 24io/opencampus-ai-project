@@ -274,7 +274,7 @@ information from different representation subspaces. The attention mechanism is 
 
 $e_ij = LeakyReLU(a^T [W h_i || W h_j])$
 
-where $a ∈ R^{2d x 1}$ is the attention kernel, $W ∈ R^{f x d}$ is the weight matrix, and $h_i$, $h_j$ are the feature vectors of nodes $i$ and $j$[^31]. The concatenation of $W h_i$ and $W h_j$ (denoted by $||$) represents the combined feature representation of node pair $(i, j)$. The resulting score $e_ij$ indicates the importance of node $j$'s features to node $i$. 
+where $a ∈ R^{2d x 1}$ is the attention kernel, $W ∈ R^{f x d}$ is the weight matrix, and $h_i$, $h_j$ are the feature vectors of nodes $i$ and $j$[^31]. The concatenation of $W h_i$ and $W h_j$ (denoted by $||$) represents the combined feature representation of node pair $(i, j)$. The resulting score $e_ij$ indicates the importance of node $j$'s features to node $i.$ 
 The attention coefficients are then normalised using the softmax function:
 
 
@@ -292,7 +292,10 @@ We use Xavier uniform initialisation for the weight matrices and zero initialisa
 
 #### Output Layer
 
-The final output layer is a dense layer with a sigmoid activation function, producing a binary classification output for each node. The output labels indicate whether each column in the matrix corresponds to the start of a block, with the final output being reshaped to match the desired output shape of $(\text{batch\_size}, 64)$.
+The final output layer is a dense layer with a sigmoid activation function, 
+producing a binary classification output for each node. 
+The output labels indicate whether each column in the matrix corresponds to the start of a block, 
+with the final output being reshaped to match the desired output shape of $(batch_size, 64)$.
 
 
 # Model Performance Evaluation
