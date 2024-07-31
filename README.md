@@ -51,7 +51,7 @@ as specialised storage formats can be employed to reduce memory requirements, al
 problems than would be feasible
 with dense matrix representations [^1]. 
 
-Due to the multiple variables associated with each grid cell, \(A\) often exhibits a block-diagonal structure which can be represented as:
+Due to the multiple variables associated with each grid cell, $A$ often exhibits a block-diagonal structure which can be represented as:
 
 $$
 A = 
@@ -145,7 +145,7 @@ apparent due to ordering issues or noise elements, making the identification of 
 Building on the work of Götz et al. (2018) [^18], our goal is therefore to forecast diagonal block locations in a 
 collection of large sparse matrices in order to efficiently build Block-Jacobi preconditioners and ultimately 
 improve the convergence of the Generalised Minimal Residual (GMRES) solver. The GMRES solver is frequently
-employed in conjunction with the Block-Jacobi preconditioner[^14],[^20] and aims to solve sparse systems of linear equations of the form \(Ax = b\), where \(A\) is a non-singular \(n \times n\) matrix, and \(x\) and \(b\) are vectors of length \(n\). Specifically, GMRES operates by iteratively minimising the residual norm over expanding Krylov subspaces until it falls below the predefined convergence threshold.
+employed in conjunction with the Block-Jacobi preconditioner[^14],[^20] and aims to solve sparse systems of linear equations of the form \(Ax = b\), where $A$ is a non-singular \(n \times n\) matrix, and \(x\) and \(b\) are vectors of length \(n\). Specifically, GMRES operates by iteratively minimising the residual norm over expanding Krylov subspaces until it falls below the predefined convergence threshold.
 
 Similar to [^18], we use predictive techniques to determine the location of diagonal blocks inside 
 our sparse matrices. This enables us to rapidly identify and implement the Block-Jacobi preconditioner. 
@@ -180,10 +180,10 @@ These approaches offer different trade-offs between accuracy, speed, and applica
 
 Striking a balance between the advantages of ML and the need for numerical accuracy, [^25] formulated the task of 
 finding an effective preconditioner as an unsupervised learning problem. The authors employed a CNN to learn a
-function \(f\) that maps an input matrix \(A\) to a preconditioner \(M^{-1}\). The learning process involves 
+function \(f\) that maps an input matrix $A$ to a preconditioner \(M^{-1}\). The learning process involves 
 minimising the condition number of the preconditioned system \(AM^{-1}\) across a training set of sparse 
 Symmetric Positive Definite (SPD) matrices. The model receives the lower triangular component and diagonal 
-of the system matrix \(A\) as input and transforms them to create an SPD preconditioner. 
+of the system matrix $A$ as input and transforms them to create an SPD preconditioner. 
 This approach of using a CNN-generated preconditioner alongside the traditional Conjugate 
 Gradient algorithm works effectively for a variety of applications, including solving the 
 Pressure Poisson Equation (PPE) in CFD, while guaranteeing a certain level of numerical accuracy [^25]. Nevertheless, the computational cost of calculating condition numbers during training may limit its performance advantage.
@@ -262,7 +262,7 @@ H = \sigma(A X W + \beta)
 where \(\sigma\) is an activation function (e.g., ReLU), \(W \in \mathbb{R}^{f \times d}\) is the learnable weight 
 matrix (with \(d\) being the number of output features), and \(\beta \in \mathbb{R}^{d}\) is the bias term [^30].
 The layer applies the weight matrix \(W\) to transform the node features \(X\), then 
-aggregates the features using the adjacency matrix \(A\), capturing information from neighbouring nodes. 
+aggregates the features using the adjacency matrix $A$, capturing information from neighbouring nodes. 
 For a more detailed description of convolutions on graphs, please refer to [^30]. L2 regularisation is applied to the weights to prevent overfitting, ensuring that the model generalises well to unseen data.
 
 #### Graph Attention Layer
