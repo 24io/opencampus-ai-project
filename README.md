@@ -65,9 +65,9 @@ $$
 
 <br>
 
-where each \(B_{ii}$ is a square block matrix corresponding to the 
+where each $B_{ii}$ is a square block matrix corresponding to the 
 coupling between variables within a single cell or a small group of cells,
-while the remaining \(A_{ij}$ are sparse.
+while the remaining $A_{ij}$ are sparse.
 
 
 
@@ -75,12 +75,12 @@ while the remaining \(A_{ij}$ are sparse.
 
 Although much research goes into optimising existing algorithms to solve systems of linear equations efficiently, 
 the complexity of direct solving methods, i.e., Gaussian elimination or LU factorisation, 
-can be as high as \(O(N^{3})$ [^10],[^11],[^12],[^13]. 
+can be as high as $O(N^{3})$ [^10],[^11],[^12],[^13]. 
 For large systems, this can lead to significant computational costs and limitations in terms of memory usage. 
 In FE and FV simulations, a common approach is to approximate the solution of the matrices by iteratively refining 
 an initial guess until a predefined convergence criterion is satisfied [^14],[^15]. 
 For iterative solving algorithms such as GMRES, which is introduced in Section 3, 
-each iteration has a complexity of `O(N^{2}`. 
+each iteration has a complexity of $O(N^{2}$. 
 Hence, depending on the size of the matrix and the number of iterations required, 
 these methods can offer substantial computational savings over direct methods, particularly 
 if the matrices are sparse [^14]. If the matrices are ill-conditioned, however, 
