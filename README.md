@@ -226,8 +226,9 @@ At first, random background noise is added to the matrices based on user-defined
 
 We trained a CNN with a similar architecture to [^18] to predict the block starts of our synthetic matrices. The model consists of three main components: a bottleneck unit, a corner detection module, and a fully-connected predictor. The bottleneck unit comprises two convolutional layers with 32 and 128 filters respectively, using SELU activation, batch normalisation, and L2 regularisation. An additive skip connection is employed to facilitate gradient flow. The corner detection module involves zero padding followed by two convolutional layers with tanh activation. The fully-connected predictor flattens the output and applies two dense layers with sigmoid activation, incorporating dropout for regularisation.
 
-*Figure 1: CNN Model Architecture (simplified).*
+
 ![CNN Architecture](Images/cnn_architecture.png)
+#### *Figure 1: CNN Model Architecture.*
 
 #### Weight Initialisation and Regularisation
 
@@ -331,7 +332,7 @@ proposed by [^26]. Therefore, the algorithm described in their paper was impleme
 | GCN   | 0.8837   | 356 | 561 | 10955 | 928 | 0.39      | 0.28   | 0.32     |
 | SVB   | 0.8475   | 66  | 734 | 10782 | 1218| 0.08      | 0.05   | 0.06     |
 
-*Table 1: Performance comparison of block start detection methods.*
+#### *Table 1: Performance comparison of block start detection methods.*
 
 # GMRES Convergence Comparison
 
@@ -345,7 +346,7 @@ Table 2 shows the results from the different GMRES experiment runs. On average, 
 | Preconditioner from Supervariable Blocking | 180/200 (90.0%)   | 368.43          | 119.5             | 5,740          | 19             |
 | Preconditioner from GCN Predictions       | 176/200 (88.0%)   | 271.42          | 109.5             | 3,756          | 16             |
 
-*Table 2: Performance comparison of different preconditioners on original (unprocessed) matrices.*
+#### *Table 2: Performance comparison of different preconditioners on original (unprocessed) matrices.*
 
 # Conclusion
 
