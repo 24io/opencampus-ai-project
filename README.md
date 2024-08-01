@@ -226,14 +226,16 @@ At first, random background noise is added to the matrices based on user-defined
 
 We trained a CNN with a similar architecture to [^18] to predict the block starts of our synthetic matrices. The model consists of three main components: a bottleneck unit, a corner detection module, and a fully-connected predictor. The bottleneck unit comprises two convolutional layers with 32 and 128 filters respectively, using SELU activation, batch normalisation, and L2 regularisation. An additive skip connection is employed to facilitate gradient flow. The corner detection module involves zero padding followed by two convolutional layers with tanh activation. The fully-connected predictor flattens the output and applies two dense layers with sigmoid activation, incorporating dropout for regularisation.
 
+*Figure 1: CNN Model Architecture (simplified).*
+![CNN Architecture](Images/cnn_architecture.png)
+
 #### Weight Initialisation and Regularisation
 
 In addition to the architecture proposed by [^18], we also implemented different weight 
 initialisation techniques to maintain constant variance of activations: Xavier weight initialisation [^28] was employed across the layers with tanh or sigmoid activations, and LeCun initialisation was used for layers with SELU activation. Weight initialisation ensures that 
 input variance ≈ output variance, contributing to the model's stability and quick convergence. The figure below displays the (simplified) architecture of the model.
 
-*Figure 1: CNN Model Architecture (simplified).*
-![CNN Architecture](Images/cnn_architecture.png)
+
 
 ### Model Training
 
