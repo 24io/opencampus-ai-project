@@ -368,7 +368,7 @@ In our project, we were able to largely replicate the results reported in Götz 
 
 When comparing several methods for predicting matrix block structures, including a CNN, a GCN, and supervariable blocking, we found that neural network approaches yield higher accuracy and precision compared to supervariable blocking. However, we were not able to beat the results from the initial CNN yet.
 
-Investigating the potential for predicting block structures and expanding it to predicting the complete preconditioner could yield fascinating results in future research focused on GCNs. Furthermore, additional effort is required to improve the tuning of hyperparameters in order to fully utilise the potential of graph networks. Furthermore, the models' performance on real-world datasets needs to be explored.
+Investigating the potential for predicting block structures and expanding it to predicting the complete preconditioner could yield fascinating results in future research focused on GCNs. Additional effort is required to improve the tuning of hyperparameters in order to fully utilise the potential of graph networks. The models' performance on real-world datasets needs to be explored.
 
 
 
