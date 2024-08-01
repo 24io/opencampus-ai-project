@@ -326,18 +326,19 @@ In our case, an F1-score of .73 for block starts indicates that the model has fo
 The CNN's and GCN's block detection capabilities were also compared to traditional methods, specifically the SVB technique 
 proposed by [^26]. Therefore, the algorithm described in their paper was implemented in Python to assess the relative effectiveness of the AI-based approach compared to established methods. The CNN clearly outperformed the GCN and the SVB method. The performance results of all block-detection methods are summarised in the table below.
 
+#### *Table 1: Performance comparison of block start detection methods.*
 | Model | Accuracy | TP  | FP  | TN    | FN  | Precision | Recall | F1-score |
 |-------|----------|-----|-----|-------|-----|-----------|--------|----------|
 | CNN   | 0.9470   | 1408| 453 | 16776 | 563 | 0.76      | 0.71   | 0.73     |
 | GCN   | 0.8837   | 356 | 561 | 10955 | 928 | 0.39      | 0.28   | 0.32     |
 | SVB   | 0.8475   | 66  | 734 | 10782 | 1218| 0.08      | 0.05   | 0.06     |
 
-#### *Table 1: Performance comparison of block start detection methods.*
 
 # GMRES Convergence Comparison
 
 Table 2 shows the results from the different GMRES experiment runs. On average, the systems converged after 2,567 iterations when used without a preconditioner, and after 263 iterations when used with Block-Jacobi preconditioners created from the true labels. This is a speed-up of approximately 100x. As anticipated, the convergence improvement is smaller when using a preconditioner constructed from the predicted block starts, which we explain by the deviation of the predictions from the true block starts. Correspondingly, the performance is further affected when creating the preconditioner using the GCN or the SVB technique, although there is still an improvement regarding the average required iteration counts compared to not using a preconditioner at all. It should be noted that there is a significant difference between the mean and median iterations, which is explained by the presence of ill-conditioned matrices in the dataset (outliers) that converged very slowly.
 
+#### *Table 2: Performance comparison of different preconditioners on original (unprocessed) matrices.*
 | Preconditioner Type                       | Convergence (#/%) | Mean Iterations | Median Iterations | Max Iterations | Min Iterations |
 |-------------------------------------------|-------------------|-----------------|-------------------|----------------|----------------|
 | No Preconditioner                         | 181/200 (90.5%)   | 2,566.98        | 1,700.0           | 10,381         | 168            |
@@ -346,7 +347,6 @@ Table 2 shows the results from the different GMRES experiment runs. On average, 
 | Preconditioner from Supervariable Blocking | 180/200 (90.0%)   | 368.43          | 119.5             | 5,740          | 19             |
 | Preconditioner from GCN Predictions       | 176/200 (88.0%)   | 271.42          | 109.5             | 3,756          | 16             |
 
-#### *Table 2: Performance comparison of different preconditioners on original (unprocessed) matrices.*
 
 # Conclusion
 
