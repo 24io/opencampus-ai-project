@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from scipy.linalg import inv, pinv, LinAlgError
 from scipy.sparse.linalg import gmres
-from matrixkit import util
+from . import util
 
 
 def generate_block_jacobi_preconditioner(
