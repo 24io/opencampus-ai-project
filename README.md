@@ -8,21 +8,30 @@ which are then used to construct Block-Jacobi preconditioners for accelerating t
 iterative solvers. Our models, a Convolutional Neural Network (CNN) and a Graph Convolutional Network
 (GCN), outperform traditional methods for block detection. The CNN achieves an accuracy of 95% and an F1-score of 0.73. 
 The GMRES convergence was improved by 100x using the predicted block structures.
-### Results Summary
+
+#### Results Summary:
 - **Best Model:** CNN
 - **Evaluation Metric:** Accuracy, F1
 - **Result:** [95% accuracy, F1-score of 0.73]
 - **Impact:** Improved GMRES convergence by 100x (from 2,567 to 262 iterations on average)
 
-The full paper is available [here](https://github.com/24io/opencampus-preconditioner-ai-project/blob/main/paper).
+#### Paper:
 
+The full paper is available [here](https://github.com/24io/opencampus-preconditioner-ai-project/blob/main/Paper/2024-07-30%20Predicting%20Block%20Strucutres).
+
+#### Authors:
+- Anna Valentina Hirsch [GitHub](https://github.com/AnnaValentinaHirsch)
+- Toni Johann Schulze Dieckhoff [GitHub](https://github.com/24io)
+
+#### Python Package:
 We also created a Python package for synthetic matrix generation, which can be installed via pip:
 ```bash 
 pip install matrixkit
 ```
 The source code of the package can be found [here](https://github.com/AnnaValentinaHirsch/matrixkit).
-## Background
-### Computational Fluid Dynamics
+
+## 1. Introduction
+### 1.1. Computational Fluid Dynamics
 
 Many real-world phenomena are continuous in nature and characterised by a multitude of variables that interact in complex ways. 
 Such phenomena are typically modelled using sets of partial differential equations (PDEs) 
@@ -78,7 +87,7 @@ while the remaining $A_{ij}$ are sparse.
 
 
 
-## Motivation
+## 2. Motivation
 
 Although much research goes into optimising existing algorithms to solve systems of linear equations efficiently, 
 the complexity of direct solving methods, i.e., Gaussian elimination or LU factorisation, 
@@ -98,7 +107,7 @@ This is often the case in CFD, where scale differences and coupled phenomena
 distribution of eigenvalues and high condition numbers [^10],[^14],[^16].
 
 
-
+### 2.1 Convergence Acceleration through Preconditioning
 To accelerate the convergence of an iterative solver, a preconditioner matrix $P$ can be applied to both sides of the 
 equation, where  $P ≈ A^{-1}$. Thus, the original system $Ax + b$ is transformed into a system 
 $PAx = Pb$, whereby $PA$ and $Pb$ are ideally cheap to compute and have a more favourable eigenvalue 
@@ -113,7 +122,7 @@ If $P$ is cleverly chosen then the number iterations for solving this system wil
 thereby to cluster the eigenvalues of $PA$ around 1 and away from zero, thereby reducing the condition number and 
 improving the convergence rate of the iterative solver [^14]. 
 
-## Block Jacobi Preconditioner
+### 2.2. Block Jacobi Preconditioner
 The Block-Jacobi preconditioner is a natural extension of the classical Jacobi method, 
 tailored to handle the block structure often encountered in CFD problems [^14]. 
 It is particularly well-suited for systems where variables are tightly coupled within local regions but less so 
@@ -144,7 +153,7 @@ with domain decomposition strategies commonly used in CFD, where the computation
 Each subdomain can naturally correspond to a block in the preconditioner, 
 preserving the physical and numerical relationships within the local region [^14]. 
 
-### Problem Statement
+### 2.3. Problem Statement
 
 Traditionally, matrix block structures are determined using domain-specific knowledge or heuristics. 
 For matrices from unknown sources, however, their inherent block structures may not be immediately 
@@ -170,7 +179,7 @@ we proceed to explore each stage of the process methodologically, beginning with
 with the modelling process. Finally, we analyse our findings and outline potential avenues for future research.
 
 
-## Related Work
+## 3. Related Work
 
 The application of machine learning (ML) techniques, particularly CNNs, to enhance the solving of large sparse linear systems has gained significant traction in recent years. This approach aims to leverage the pattern recognition capabilities of Neural Networks (NN) to either directly solve linear systems or, more commonly, to generate effective preconditioners that accelerate the convergence of traditional iterative methods.
 
@@ -203,7 +212,7 @@ we specifically target the Block-Jacobi preconditioner. By exploiting its inhere
 for efficient GPU acceleration (see [^18],[^26], we aim to bridge the gap between numerical linear algebra and 
 high-performance computing. Building upon [^18]'s work, our objective is therefore to identify the locations of blocks within sparse matrices as the basis for constructing the preconditioner. By employing ML techniques to detect these blocks, we can align our preconditioning strategy more closely with the matrix's intrinsic properties, potentially handling a wider variety of matrix types more effectively.
 
-## Experimental Setup
+## 4. Experimental Setup
 
 In order to assess the efficacy and scalability of the generated Block-Jacobi preconditioners, 
 we conducted a series of experiments in a controlled environment. Using the matrices from our test dataset, 
@@ -212,22 +221,22 @@ using a preconditioner generated from the actual labels, using a preconditioner 
 and using a preconditioner generated from the supervariable blocking (SVB) algorithm, a 
 non-machine learning technique for detecting block patterns [^26].
 
-### Hardware and Software Configuration
+### 4.1. Hardware and Software Configuration
 
 Python 3.9 is used for all experiments. We employ an A100 GPU equipped with 25GB of RAM to train our model. Additionally, we utilise TensorFlow 2.15.0 in conjunction with Keras 2. A requirements file containing all the necessary libraries and versions is provided for easy replication of our experiments.
 
-### Data Generation (MatrixKit Package)
+### 4.2. Data Generation (MatrixKit Package)
 
 Due to the insufficient availability of labelled real-world matrices, we developed a Python package that creates custom matrices specifically designed for our machine learning experiments. The library is called `matrixkit` and can be installed by running `pip install matrixkit`. It contains various functionalities to produce realistic synthetic data by first constructing a set of zero matrices with specified dimensions and then gradually adding complexity.
 
 At first, random background noise is added to the matrices based on user-defined parameters for noise density and value ranges. Following that, two types of block structures are added to the matrices: noise blocks and data blocks. The sizes of these blocks are determined using a truncated normal distribution, allowing for controlled variability within specified ranges. As desired, blocks can be inserted with random gaps based on a given probability. Within each block, values are added according to a specified density. The library's design allows for fine-tuning of various parameters, including matrix dimensions, noise levels, block sizes, and densities. By adjusting these parameters, researchers can create matrices that closely resemble those encountered in their specific domains of study. Throughout the generation process, the library maintains detailed metadata about the matrices, including the user-specified parameters as well as the actual block start positions. The latter corresponds to the labels of the matrices that are used for model training. For further details, please consult the package documentation 
 [^27].
 
-# Modelling
+## 5. Modelling
 
-## Convolutional Neural Network
+### 5.1. Convolutional Neural Network
 
-### Model Architecture
+#### 5.1.1. Model Architecture
 
 We trained a CNN with a similar architecture to [^18] to predict the block starts of our synthetic matrices. The model consists of three main components: a bottleneck unit, a corner detection module, and a fully-connected predictor. The bottleneck unit comprises two convolutional layers with 32 and 128 filters respectively, using SELU activation, batch normalisation, and L2 regularisation. An additive skip connection is employed to facilitate gradient flow. The corner detection module involves zero padding followed by two convolutional layers with tanh activation. The fully-connected predictor flattens the output and applies two dense layers with sigmoid activation, incorporating dropout for regularisation.
 
@@ -235,7 +244,7 @@ We trained a CNN with a similar architecture to [^18] to predict the block start
 ![CNN Architecture](Images/cnn_architecture.png)
 #### *Figure 1: CNN Model Architecture.*
 
-#### Weight Initialisation and Regularisation
+#### 5.1.2. Weight Initialisation and Regularisation
 
 In addition to the architecture proposed by [^18], we also implemented different weight 
 initialisation techniques to maintain constant variance of activations: Xavier weight initialisation [^28] was employed across the layers with tanh or sigmoid activations, and LeCun initialisation was used for layers with SELU activation. Weight initialisation ensures that 
@@ -243,7 +252,7 @@ input variance ≈ output variance, contributing to the model's stability and qu
 
 
 
-### Model Training
+### 5.1.3. Model Training
 
 The training process comprised 200 epochs with a batch size of 16. Early stopping is implemented with
 patience set to ten epochs. To ensure reproducibility of results and keep track of the model's progress, 
@@ -252,9 +261,9 @@ Similar to [^18], we use the Nadam optimiser, which combines Adam (adaptive mome
 
 During training, the model tries to minimise the loss function. Since we are dealing with imbalanced classes, where roughly 10 percent of the matrices represent block starts, a custom loss function named "weighted binary cross entropy" was implemented. The function assigns different weights to classes based on their frequency in the dataset. Therefore, it calculates the standard binary cross-entropy for each element, and subsequently applies class-specific weights to the loss values. The minority class (block start) is given higher weights, forcing the model to pay more attention to these occurrences. The function guarantees the correct arrangement of inputs, trims prediction values to prevent numerical instability, and applies the weighting scheme individually to each element. By calculating the average weighted loss for each batch, it ensures that the training signal is balanced, which in turn helps the model achieve good performance across all classes, regardless of their frequency in the training data. The training function returns the trained model, as well as the loss histories for training and validation.
 
-## Graph Convolutional Network
+### 5.2. Graph Convolutional Network
 
-### Model Architecture
+#### 5.2.1. Model Architecture
 
 Our Graph Convolutional Network (GCN) model is designed to capture the structural relationships within the input data. The architecture consists of several key components: graph convolution layers, graph attention layers, and a combination of residual connections and dense layers for feature extraction and prediction. The model takes two inputs: a feature matrix $X \in \mathbb{R}^{n \times f}$, where $n$ is the number of nodes and $f$ is the number of features per node, and an adjacency matrix $A \in \mathbb{R}^{n \times n}$ representing the graph structure. To maintain consistency with the CNN, we only consider the matrix bands and not the full matrices. Hence, in our specific case:
 
@@ -263,7 +272,7 @@ Our Graph Convolutional Network (GCN) model is designed to capture the structura
 
 This results in a feature matrix $X \in \mathbb{R}^{64 \times 21}$ and an adjacency matrix $A \in \mathbb{R}^{64 \times 64}$. The model can be configured to use either graph attention or standard graph convolution, which are explained below.
 
-#### Graph Convolution Layer
+#### 5.2.2. Graph Convolution Layer
 
 The graph convolution layer is implemented as a custom layer that performs the following operation:
 
@@ -275,7 +284,7 @@ The layer applies the weight matrix $W$ to transform the node features $X$, then
 aggregates the features using the adjacency matrix $A$, capturing information from neighbouring nodes. 
 For a more detailed description of convolutions on graphs, please refer to [^30]. L2 regularisation is applied to the weights to prevent overfitting, ensuring that the model generalises well to unseen data.
 
-#### Graph Attention Layer
+#### 5.2.3. Graph Attention Layer
 
 To enhance the model's ability to focus on important parts of the graph, we implemented a graph attention 
 mechanism (GraphAttention). This layer uses multi-head attention, allowing the model to jointly attend to 
@@ -291,15 +300,15 @@ $\alpha_{ij} = \frac{\exp(e_{ij})}{\sum_{k \in \mathcal{N}(i)} \exp(e_{ik})}$
 
 where $\mathcal{N}(i)$ denotes the set of neighbouring nodes of node $i$ [^31]. The normalised attention coefficients $\alpha_{ij}$ are used to compute a weighted sum of the node features, effectively allowing the model to focus on the most relevant parts of the graph.
 
-#### Residual Connections
+#### 5.2.4. Residual Connections
 
 We also added residual connections, introduced by [^32], which are designed to facilitate the training of deep NNs by alleviating the vanishing gradient problem and improving gradient flow. These connections, also known as "shortcut connections" or "skip connections," enable the model to learn a residual function $F(x)$—which is essentially the difference between the desired output $H(x)$ and the input $x$—rather than learning the entire mapping function $H(x)$ from scratch. In practice, this means that the output from one layer is directly added to the output of a later layer, bypassing one or more intermediate layers. This bypassed output (i.e., the original input that skips the intermediate layers) is then added to the output of the subsequent layers instead of replacing them. This mechanism helps to preserve the original information while allowing the model to learn more complex features. In our GCN model, these residual connections specifically help maintain the fidelity of the original input features while allowing the network to learn increasingly abstract representations, which is particularly important for capturing both local and global structural information in the sparse matrices.
 
-#### Initialisation and Regularisation
+#### 5.2.5. Initialisation and Regularisation
 
 We use Xavier uniform initialisation for the weight matrices and zero initialisation for biases. L2 regularisation is applied to all weight matrices to prevent overfitting. Dropout is incorporated in the graph attention layers for further regularisation.
 
-#### Output Layer
+#### 5.2.6. Output Layer
 
 The final output layer is a dense layer with a sigmoid activation function, 
 producing a binary classification output for each node. 
@@ -307,7 +316,7 @@ The output labels indicate whether each column in the matrix corresponds to the 
 with the final output being reshaped to match the desired output shape of (batch_size, $64)$.
 
 
-# Model Performance Evaluation
+## 6. Model Performance Evaluation
 
 For evaluation, we calculate the weighted binary cross-entropy loss of the test set and several key metrics. These include element-wise accuracy, which measures the proportion of correctly classified individual elements across all samples and classes. A classification report provides precision, recall, and F1-score for each class. The confusion matrix offers a detailed breakdown of true positives, false negatives, true negatives, and false positives, enabling a thorough analysis of the model's classification performance.
 
@@ -339,7 +348,7 @@ proposed by [^26]. Therefore, the algorithm described in their paper was impleme
 | SVB   | 0.8475   | 66  | 734 | 10782 | 1218| 0.08      | 0.05   | 0.06     |
 
 
-# GMRES Convergence Comparison
+## 7. GMRES Convergence Comparison
 
 Table 2 shows the results from the different GMRES experiment runs. On average, the systems converged after 2,567 iterations when used without a preconditioner, and after 263 iterations when used with Block-Jacobi preconditioners created from the true labels. This is a speed-up of approximately 100x. As anticipated, the convergence improvement is smaller when using a preconditioner constructed from the predicted block starts, which we explain by the deviation of the predictions from the true block starts. Correspondingly, the performance is further affected when creating the preconditioner using the GCN or the SVB technique, although there is still an improvement regarding the average required iteration counts compared to not using a preconditioner at all. It should be noted that there is a significant difference between the mean and median iterations, which is explained by the presence of ill-conditioned matrices in the dataset (outliers) that converged very slowly.
 
@@ -353,7 +362,7 @@ Table 2 shows the results from the different GMRES experiment runs. On average, 
 | Preconditioner from GCN Predictions       | 176/200 (88.0%)   | 271.42          | 109.5             | 3,756          | 16             |
 
 
-# Conclusion
+## 8. Conclusion
 
 In our project, we were able to largely replicate the results reported in Götz et al.'s paper [^18], showcasing the efficacy of using machine learning to accelerate the convergence of iterative solving algorithms. For this purpose, we also developed a small Python package for easy synthetic matrix generation, which is publicly available and can be installed via pip.
 
@@ -364,11 +373,11 @@ Investigating the potential for forecasting block structures and expanding it to
 
 
 
-## Cover Image
+## 9. Cover Image
 
 ![Project Cover Image](Images/cover_image.png)
 
-## References
+## 10. References
 
 [^1]: Yousef Saad. *Iterative Methods for Sparse Linear Systems*. SIAM, 2003.
 [^2]: Robert A. Brown. Chapter 1 fundamentals of fluid dynamics, 1991.
