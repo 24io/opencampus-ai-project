@@ -357,7 +357,7 @@ Investigating the potential for forecasting block structures and expanding it to
 
 ## Cover Image
 
-![Project Cover Image](CoverImage/cover_image.png)
+![Project Cover Image](Images/cover_image.png)
 
 ## References
 
