@@ -232,6 +232,7 @@ In addition to the architecture proposed by [^18], we also implemented different
 initialisation techniques to maintain constant variance of activations: Xavier weight initialisation [^28] was employed across the layers with tanh or sigmoid activations, and LeCun initialisation was used for layers with SELU activation. Weight initialisation ensures that 
 input variance ≈ output variance, contributing to the model's stability and quick convergence. The figure below displays the (simplified) architecture of the model.
 
+*Figure 1: CNN Model Architecture (simplified).*
 ![CNN Architecture](Images/cnn_architecture.png)
 
 ### Model Training
