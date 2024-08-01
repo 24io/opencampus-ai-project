@@ -16,6 +16,11 @@ The GMRES convergence was improved by 100x using the predicted block structures.
 
 The full paper is available [here](https://github.com/24io/opencampus-preconditioner-ai-project/blob/main/paper).
 
+We also created a Python package for synthetic matrix generation, which can be installed via pip:
+```bash 
+pip install matrixkit
+```
+The source code of the package can be found [here](https://github.com/AnnaValentinaHirsch/matrixkit).
 ## Background
 ### Computational Fluid Dynamics
 
