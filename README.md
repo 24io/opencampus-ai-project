@@ -255,7 +255,7 @@ input variance ≈ output variance, contributing to the model's stability and qu
 ### 5.1.3. Model Training
 
 The training process comprised 200 epochs with a batch size of 16. Early stopping is implemented with
-patience set to ten epochs. To ensure reproducibility of results and keep track of the model's progress, 
+patience set to ten epochs. Given that important information is concentrated around the matrices' diagonals [^18], we only use the diagonal bands as model inputs, instead of the full matrices. Therefore, we specify a band width of 10 in both direction from the main diagonal, plus the diagonal itself, leading to an input shape of (band_width, matrix_dim)=(21, 64). To ensure reproducibility of results and keep track of the model's progress, 
 checkpoints are saved every 10 epochs, and TensorBoard logging is used for real-time performance monitoring. 
 Similar to [^18], we use the Nadam optimiser, which combines Adam (adaptive moment estimation, see [^29]) with Nesterov momentum. This optimiser calculates the gradient at a look-ahead position, potentially leading to improved convergence rates. Additionally, a learning rate scheduler was implemented to dynamically adjust the learning rate during training.
 
