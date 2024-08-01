@@ -50,7 +50,7 @@ def plot_matrices_and_metadata(
     cols, rows = fig_shape
     cbar_map_values = VALUE_COLORBAR
     cbar_map_blocks = BLOCK_COLORBAR
-    cbar_kws = {"ticks": [0, 0.2, 0.4, 0.6, 0.8, 1.0], "orientation": "horizontal"}
+    cbar_kws = {'ticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
 
     num_of_subplots = len(matrix_indices)
     row_col_number = cols * 100 + rows * 10
@@ -62,17 +62,14 @@ def plot_matrices_and_metadata(
         this_hex_str = util.generate_block_vector_hex_string(matrix_data.noise_blk_starts[this_index])
 
         sp1 = figure.add_subplot(cols, rows, SUBPLOTS * i + 1)
-        sp1.set_title(f"Matrix [{this_index}] diagonal band\nstart-vector-hex:\n{this_hex_str}")
+        sp1.set_title(f"Matrix [{this_index}] diagonal band\nstart-vector-hex: {this_hex_str}")
         sns.heatmap(
             matrix_data.bands[this_index],
             cmap=cbar_map_values,
-            cbar_kws=cbar_kws,
             xticklabels=False,
             yticklabels=False,
-            cbar=True,
-            square=True,
-            vmin=0,
-            vmax=1
+            cbar=False,
+            square=True
         )
         sp1.patch.set_alpha(0.0)  # make subplot 1 transparent
 
@@ -81,9 +78,9 @@ def plot_matrices_and_metadata(
         sns.heatmap(
             matrix_data.matrices[this_index],
             cmap=cbar_map_values,
+            cbar_kws=cbar_kws,
             xticklabels=False,
             yticklabels=False,
-            cbar=False,
             square=True,
             vmin=0,
             vmax=1
