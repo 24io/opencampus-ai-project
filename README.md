@@ -17,7 +17,7 @@ The GMRES convergence was improved by 100x using the predicted block structures.
 
 #### Paper:
 
-The full paper is available [here](https://github.com/24io/opencampus-preconditioner-ai-project/blob/main/Paper/2024-07-30%20Predicting%20Block%20Strucutres).
+The full paper is available [here](https://github.com/24io/opencampus-preconditioner-ai-project/tree/3a36b508addec70eba171fdc19b3e5303955f536/Paper).
 
 #### Authors (in equal contribution):
 - Anna-Valentina Hirsch [GitHub](https://github.com/AnnaValentinaHirsch)
